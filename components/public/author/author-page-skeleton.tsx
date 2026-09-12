@@ -1,0 +1,3 @@
+export function AuthorPageSkeleton() {
+  return <main aria-busy="true" aria-label="در حال بارگذاری نویسنده" className="mx-auto min-h-[70vh] max-w-360 animate-pulse px-4 py-10 md:px-7"><div className="h-4 w-40 rounded bg-(--surface-muted)"/><div className="mt-10 flex items-center gap-7"><div className="size-28 rounded-full bg-(--surface-muted)"/><div className="flex-1"><div className="h-10 max-w-64 rounded bg-(--surface-muted)"/><div className="mt-4 h-4 max-w-xl rounded bg-(--surface-muted)"/><div className="mt-2 h-4 max-w-md rounded bg-(--surface-muted)"/></div></div><div className="mt-12 h-105 rounded-2xl bg-(--surface-muted)"/></main>;
+}

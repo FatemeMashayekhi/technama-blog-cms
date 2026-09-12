@@ -1,0 +1,2 @@
+export function TaxonomySkeleton({ compact = false }: { compact?: boolean }) { return <div className={`grid grid-cols-1 gap-3 ${compact ? "md:grid-cols-2" : "md:grid-cols-2 2xl:grid-cols-3"}`} role="status" aria-label="در حال بارگذاری">{Array.from({ length: 6 }, (_, index) => <div key={index} className={`${compact ? "h-20" : "h-64"} animate-pulse rounded-(--radius) border border-(--border) bg-white`} />)}</div>; }
+

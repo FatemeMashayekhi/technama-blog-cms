@@ -1,0 +1,5 @@
+import { FileSearch, Upload } from "lucide-react";
+
+export function MediaEmptyState({ hasMedia, onReset, onUpload }: { hasMedia: boolean; onReset: () => void; onUpload: () => void }) {
+  return <div className="col-span-full grid min-h-72 place-items-center px-5 py-12 text-center"><div className="max-w-sm"><span className="mx-auto grid size-12 place-items-center rounded-(--radius) bg-(--surface-muted) text-(--text-secondary)"><FileSearch size={22} strokeWidth={1.7}/></span><h3 className="mt-4 text-sm font-bold text-(--text-strong)">{hasMedia ? "فایلی پیدا نشد" : "هنوز فایلی آپلود نشده است"}</h3><p className="mt-2 text-[14px] leading-6 text-(--text-muted)">{hasMedia ? "عبارت جستجو یا فیلترهای خود را تغییر دهید." : "اولین رسانه مجله را آپلود کنید."}</p><button type="button" onClick={hasMedia ? onReset : onUpload} className="mt-5 inline-flex h-10 items-center gap-2 rounded-(--radius-sm) border border-(--border) px-4 text-xs font-bold text-(--text-secondary) hover:bg-(--surface-subtle)">{!hasMedia && <Upload size={15}/>} {hasMedia ? "پاک‌کردن فیلترها" : "آپلود رسانه"}</button></div></div>;
+}

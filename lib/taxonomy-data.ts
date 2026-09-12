@@ -1,0 +1,29 @@
+export type Category = { id: string; name: string; slug: string; description: string; icon: string; color: string; parentId?: string; articleCount: number; views: number; createdAt: string; coverImage?: string; seo: { title: string; description: string; canonicalUrl: string } };
+export type Tag = { id: string; name: string; slug: string; articleCount: number; createdAt: string };
+export type CategoryFormData = Pick<Category, "name" | "slug" | "description" | "icon" | "color" | "parentId" | "coverImage" | "seo">;
+export type TagFormData = Pick<Tag, "name" | "slug">;
+
+export const mockCategories: Category[] = [
+  { id: "ai", name: "هوش مصنوعی", slug: "artificial-intelligence", description: "اخبار، تحلیل و آموزش‌های مرتبط با AI و یادگیری ماشین", icon: "Sparkles", color: "#176f66", articleCount: 128, views: 248000, createdAt: "2023-02-10", seo: { title: "هوش مصنوعی؛ اخبار و آموزش‌ها", description: "تازه‌ترین تحلیل‌ها و آموزش‌های هوش مصنوعی و یادگیری ماشین در تک‌نما.", canonicalUrl: "https://technama.ir/category/artificial-intelligence" } },
+  { id: "programming", name: "برنامه‌نویسی", slug: "programming", description: "توسعه نرم‌افزار، معماری سیستم و ابزارهای برنامه‌نویسی", icon: "Code2", color: "#315f86", articleCount: 116, views: 219400, createdAt: "2023-02-12", seo: { title: "برنامه‌نویسی و توسعه نرم‌افزار", description: "مقاله‌های تخصصی توسعه وب، معماری و مهندسی نرم‌افزار.", canonicalUrl: "https://technama.ir/category/programming" } },
+  { id: "frontend", name: "Frontend", slug: "frontend", description: "React، CSS، مرورگر و مهندسی رابط کاربری", icon: "PanelsTopLeft", color: "#3e7184", parentId: "programming", articleCount: 54, views: 126800, createdAt: "2023-03-01", seo: { title: "توسعه Frontend", description: "آموزش‌ها و تجربه‌های توسعه رابط کاربری مدرن.", canonicalUrl: "https://technama.ir/category/frontend" } },
+  { id: "backend", name: "Backend", slug: "backend", description: "سرور، پایگاه داده و طراحی APIهای مقیاس‌پذیر", icon: "Database", color: "#675c88", parentId: "programming", articleCount: 42, views: 91700, createdAt: "2023-03-02", seo: { title: "توسعه Backend", description: "معماری سرور، پایگاه داده و API.", canonicalUrl: "https://technama.ir/category/backend" } },
+  { id: "product", name: "طراحی محصول", slug: "product-design", description: "تجربه کاربری، Design System و فرایند طراحی محصول", icon: "PenTool", color: "#8a5c3d", articleCount: 76, views: 164200, createdAt: "2023-04-20", seo: { title: "طراحی محصول و تجربه کاربری", description: "تحلیل و آموزش طراحی محصول دیجیتال.", canonicalUrl: "https://technama.ir/category/product-design" } },
+  { id: "security", name: "امنیت", slug: "cybersecurity", description: "امنیت سایبری، حریم خصوصی و محافظت از زیرساخت", icon: "ShieldCheck", color: "#924c4c", articleCount: 61, views: 139780, createdAt: "2023-05-11", seo: { title: "امنیت سایبری", description: "آخرین تهدیدها و راهکارهای امنیت دیجیتال.", canonicalUrl: "https://technama.ir/category/cybersecurity" } },
+  { id: "startup", name: "استارتاپ", slug: "startup", description: "کسب‌وکارهای نوآور، محصول و روایت بنیان‌گذاران", icon: "Rocket", color: "#836327", articleCount: 48, views: 126900, createdAt: "2023-06-03", seo: { title: "استارتاپ و نوآوری", description: "تحلیل اکوسیستم استارتاپی و ساخت محصول.", canonicalUrl: "https://technama.ir/category/startup" } },
+  { id: "hardware", name: "سخت‌افزار", slug: "hardware", description: "تراشه‌ها، رایانه‌ها و فناوری‌های پردازشی", icon: "Cpu", color: "#5d6932", articleCount: 53, views: 118320, createdAt: "2023-07-08", seo: { title: "سخت‌افزار و تراشه‌ها", description: "بررسی صنعت سخت‌افزار و محصولات پردازشی.", canonicalUrl: "https://technama.ir/category/hardware" } },
+  { id: "gadgets", name: "گجت‌ها", slug: "gadgets", description: "بررسی محصولات دیجیتال و ابزارهای هوشمند روزمره", icon: "Smartphone", color: "#745579", articleCount: 39, views: 102400, createdAt: "2023-08-17", seo: { title: "گجت‌ها و محصولات دیجیتال", description: "بررسی تازه‌ترین ابزارها و گجت‌های هوشمند.", canonicalUrl: "https://technama.ir/category/gadgets" } },
+];
+
+export const mockTags: Tag[] = [
+  { id: "tag-1", name: "Next.js", slug: "nextjs", articleCount: 42, createdAt: "2023-03-10" }, { id: "tag-2", name: "React", slug: "react", articleCount: 58, createdAt: "2023-03-11" }, { id: "tag-3", name: "TypeScript", slug: "typescript", articleCount: 37, createdAt: "2023-04-02" }, { id: "tag-4", name: "AI", slug: "ai", articleCount: 84, createdAt: "2023-02-12" }, { id: "tag-5", name: "Startup", slug: "startup", articleCount: 31, createdAt: "2023-06-04" }, { id: "tag-6", name: "UX", slug: "ux", articleCount: 29, createdAt: "2023-04-22" }, { id: "tag-7", name: "Cybersecurity", slug: "cybersecurity", articleCount: 35, createdAt: "2023-05-12" }, { id: "tag-8", name: "Frontend", slug: "frontend", articleCount: 63, createdAt: "2023-03-20" }, { id: "tag-9", name: "Product", slug: "product", articleCount: 26, createdAt: "2023-07-01" }, { id: "tag-10", name: "Cloud", slug: "cloud", articleCount: 21, createdAt: "2023-08-02" },
+];
+
+export const emptyCategory: CategoryFormData = { name: "", slug: "", description: "", icon: "Folder", color: "#176f66", parentId: "", seo: { title: "", description: "", canonicalUrl: "" } };
+export const emptyTag: TagFormData = { name: "", slug: "" };
+export const getCategory = (id: string) => mockCategories.find((item) => item.id === id) ?? null;
+export const getTag = (id: string) => mockTags.find((item) => item.id === id) ?? null;
+export const categoryToForm = (item: Category): CategoryFormData => ({ name: item.name, slug: item.slug, description: item.description, icon: item.icon, color: item.color, parentId: item.parentId ?? "", coverImage: item.coverImage, seo: { ...item.seo } });
+export const tagToForm = (item: Tag): TagFormData => ({ name: item.name, slug: item.slug });
+export const saveMockTaxonomy = async <T,>(data: T) => { await new Promise((resolve) => setTimeout(resolve, 600)); return data; };
+

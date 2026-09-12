@@ -1,0 +1,3 @@
+"use client";
+import { RefreshCw } from "lucide-react";
+export default function Error({ reset }: { error: Error; reset: () => void }) { return <div className="grid min-h-screen place-items-center bg-(--surface-subtle) px-4 text-center"><div><h1 className="text-lg font-bold text-(--text-strong)">دریافت مقاله با مشکل مواجه شد</h1><p className="mt-2 text-[13px] text-(--text-muted)">لطفاً دوباره تلاش کنید.</p><button type="button" onClick={reset} className="mt-5 inline-flex h-10 items-center gap-2 rounded-(--radius-sm) bg-(--brand-navy) px-4 text-[12px] font-bold text-white"><RefreshCw size={13}/> تلاش مجدد</button></div></div>; }

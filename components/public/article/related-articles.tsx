@@ -1,0 +1,3 @@
+import type { PublicArticle } from "@/lib/public-data";
+import { ArticleCard } from "@/components/public/article-card";
+export function RelatedArticles({ articles }: { articles: PublicArticle[] }) { return <section className="border-y border-(--border-strong) bg-(--surface-muted)"><div className="mx-auto max-w-360 px-4 py-12 md:px-7 md:py-16"><p className="text-[12px] font-bold text-(--brand-teal)">برای مطالعه بیشتر</p><h2 className="mt-1 text-xl font-bold text-(--text-strong)">مقالات مرتبط</h2><div className="mt-7 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">{articles.map((article) => <ArticleCard key={article.id} article={article}/>)}</div></div></section>; }

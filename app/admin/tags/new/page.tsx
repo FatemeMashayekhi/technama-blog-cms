@@ -1,0 +1,1 @@
+import { DashboardLayout } from "@/components/layout/dashboard-layout"; import { TagForm } from "@/components/taxonomy/tag-form"; import { emptyTag } from "@/lib/taxonomy-data"; export default function Page(){return <DashboardLayout headerTitle="ساختار محتوا" headerSubtitle="مدیریت تگ‌ها"><TagForm mode="create" initialData={emptyTag}/></DashboardLayout>}

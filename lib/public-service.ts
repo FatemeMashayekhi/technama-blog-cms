@@ -1,0 +1,2 @@
+import { featuredArticle, latestPublicArticles, popularPublicArticles, publicAuthors, publicCategories, secondaryFeatured, type PublicHomeData } from "@/lib/public-data";
+export async function getPublicHomeData(): Promise<PublicHomeData> { return { featured: featuredArticle, secondary: secondaryFeatured, latest: latestPublicArticles.slice(0, 6), popular: popularPublicArticles, categories: publicCategories, authors: publicAuthors.slice(0, 5) }; }

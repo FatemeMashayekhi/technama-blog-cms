@@ -1,0 +1,5 @@
+"use client";
+import { Check, Copy } from "lucide-react";
+import { useState } from "react";
+export function CodeBlock({ language, code }: { language: string; code: string }) { const [copied, setCopied] = useState(false); const copy = async () => { try { await navigator.clipboard.writeText(code); setCopied(true); window.setTimeout(() => setCopied(false), 1800); } catch { setCopied(false); } }; return <div dir="ltr" className="my-8 overflow-hidden rounded-(--radius) bg-(--brand-navy) text-left shadow-sm"><div className="flex h-10 items-center justify-between border-b border-white/10 px-4 text-[12px] text-(--text-on-dark-muted)"><span>{language}</span><button type="button" onClick={copy} className="flex h-10 items-center gap-1.5 rounded-md px-2 hover:bg-white/10" aria-label="کپی کد">{copied ? <Check size={12}/> : <Copy size={12}/>}{copied ? "کپی شد" : "کپی"}</button></div><pre className="scrollbar-thin overflow-x-auto p-4 text-[14px] leading-7 text-(--text-on-dark-muted)"><code>{code}</code></pre></div>; }
+

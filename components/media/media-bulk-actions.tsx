@@ -1,0 +1,7 @@
+import { Copy, Download, Trash2, X } from "lucide-react";
+
+export function MediaBulkActions({ count, onClear, onCopy, onDownload, onDelete }: { count: number; onClear: () => void; onCopy: () => void; onDownload: () => void; onDelete: () => void }) {
+  if (!count) return null;
+  return <div className="flex flex-wrap items-center gap-2 rounded-(--radius) border border-(--border-strong) bg-(--surface-muted) p-2.5" role="toolbar" aria-label="عملیات گروهی رسانه"><div className="ml-auto flex items-center gap-2 px-1 text-[14px] font-bold text-(--brand-teal)"><button type="button" onClick={onClear} aria-label="لغو انتخاب" className="grid size-10 place-items-center rounded-md hover:bg-(--accent-soft)"><X size={15}/></button>{new Intl.NumberFormat("fa-IR").format(count)} فایل انتخاب شده</div><button type="button" onClick={onCopy} className="flex h-10 items-center gap-1.5 rounded-md border border-(--border-strong) bg-white px-2.5 text-[13px] font-bold text-(--brand-teal) hover:bg-(--accent-soft)"><Copy size={13}/> کپی لینک</button><button type="button" onClick={onDownload} className="flex h-10 items-center gap-1.5 rounded-md border border-(--border-strong) bg-white px-2.5 text-[13px] font-bold text-(--text-secondary) hover:bg-(--surface-muted)"><Download size={13}/> دانلود</button><button type="button" onClick={onDelete} className="flex h-10 items-center gap-1.5 rounded-md border border-(--danger-border) bg-white px-2.5 text-[13px] font-bold text-(--danger) hover:bg-(--danger-soft)"><Trash2 size={13}/> حذف</button></div>;
+}
+

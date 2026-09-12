@@ -1,0 +1,6 @@
+import { ArrowLeft, FileText } from "lucide-react";
+import Link from "next/link";
+import type { Author } from "@/lib/authors-data";
+import { roleLabels } from "@/lib/authors-data";
+export function ArticleAuthorCard({ author }: { author: Author }) { return <section className="mt-12 rounded-(--radius) border border-(--border-strong) bg-white p-5 sm:flex sm:items-center sm:gap-5 sm:p-6"><div className={`grid size-18 shrink-0 place-items-center rounded-full text-lg font-bold ${author.avatarColor}`}>{author.initials}</div><div className="mt-4 min-w-0 flex-1 sm:mt-0"><p className="text-[14px] font-bold text-(--brand-teal)">درباره نویسنده</p><h2 className="mt-1 text-base font-bold text-(--text-strong)">{author.name}</h2><p className="mt-1 text-[14px] text-(--text-muted)">{roleLabels[author.role]} · {author.articleCount.toLocaleString("fa-IR")} مقاله</p><p className="mt-3 text-[13px] leading-6 text-(--text-secondary)">{author.bio}</p></div><Link href={`/authors/${author.username}`} className="mt-4 flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-(--radius-sm) border border-(--border-strong) px-4 text-[12px] font-bold text-(--text-secondary) hover:bg-(--surface-muted) sm:mt-0"><FileText size={13}/> مشاهده مقالات نویسنده <ArrowLeft size={12}/></Link></section>; }
+

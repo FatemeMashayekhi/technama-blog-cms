@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="675" viewBox="0 0 1200 675" role="img" aria-labelledby="title desc">
+  <title id="title">تصویر انتزاعی فناوری</title><desc id="desc">الگوی هندسی مینیمال با رنگ‌های آبی و سبز</desc>
+  <rect width="1200" height="675" fill="#16364d"/>
+  <circle cx="930" cy="180" r="240" fill="#1f776f" opacity=".9"/>
+  <circle cx="315" cy="600" r="330" fill="#244d68"/>
+  <path d="M160 210h520M160 292h390M160 374h460" stroke="#d9ebe8" stroke-width="18" stroke-linecap="round" opacity=".82"/>
+  <path d="M835 165l95-55 95 55v110l-95 55-95-55z" fill="none" stroke="#e4f0ee" stroke-width="10" opacity=".75"/>
+</svg>
+

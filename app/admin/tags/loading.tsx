@@ -1,0 +1,2 @@
+import { TaxonomySkeleton } from "@/components/taxonomy/taxonomy-skeleton"; export default function Loading() { return <div className="min-h-screen bg-(--surface-subtle) lg:mr-67" dir="rtl"><div className="h-19 bg-white" /><main className="p-8"><div className="h-24 animate-pulse rounded-(--radius) bg-white" /><div className="mt-4"><TaxonomySkeleton compact /></div></main></div>; }
+

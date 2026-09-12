@@ -1,0 +1,3 @@
+import { AuthorsGridSkeleton } from "@/components/authors/authors-grid-skeleton";
+export default function AuthorsLoading() { return <div className="min-h-screen bg-(--surface-subtle) lg:mr-67" dir="rtl"><div className="h-19 border-b border-(--border-subtle) bg-white" /><main className="mx-auto max-w-380 p-4 md:p-7 lg:p-8"><div className="h-20 animate-pulse rounded-(--radius) bg-white" /><div className="mt-6 grid grid-cols-2 gap-3 xl:grid-cols-4">{Array.from({ length: 4 }, (_, index) => <div key={index} className="h-36 animate-pulse rounded-(--radius) bg-white" />)}</div><div className="mt-4 h-24 animate-pulse rounded-(--radius) bg-white" /><div className="mt-4"><AuthorsGridSkeleton /></div></main></div>; }
+
