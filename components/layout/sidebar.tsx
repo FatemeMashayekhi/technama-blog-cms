@@ -2,13 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import {
   BarChart3,
   BookOpenText,
   ChevronLeft,
   FolderTree,
   LayoutDashboard,
-  LogOut,
   MessageSquareText,
   PenLine,
   Settings,
@@ -16,6 +16,7 @@ import {
   X,
   Images,
 } from "lucide-react";
+import { SignOutButton } from "@/components/auth/sign-out-button";
 
 const navigation = [
   { label: "داشبورد", icon: LayoutDashboard, href: "/admin/dashboard" },
@@ -31,6 +32,8 @@ type SidebarProps = { open?: boolean; onClose?: () => void };
 
 export function Sidebar({ open = false, onClose }: SidebarProps) {
   const pathname = usePathname();
+  const [profile, setProfile] = useState<{ display_name: string; role: "admin" | "editor" | "author" } | null>(null);
+  useEffect(() => { let active = true; fetch("/api/me").then((response) => response.json()).then((result) => { if (active && result.ok) setProfile(result.data); }).catch(() => undefined); return () => { active = false; }; }, []);
 
   return (
     <>
@@ -136,21 +139,15 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
         <div className="border-t border-white/10 p-3">
           <div className="flex items-center gap-3 rounded-(--radius) px-3 py-3 hover:bg-white/5">
             <span className="grid size-10 shrink-0 place-items-center rounded-full bg-(--surface-muted) text-xs font-bold text-(--brand-teal)">
-              مم
+              {profile?.display_name.split(/\s+/).slice(0, 2).map((part) => part[0]).join("") || "مم"}
             </span>
             <span className="min-w-0 flex-1">
-              <strong className="block truncate text-xs">مریم موسوی</strong>
+              <strong className="block truncate text-xs">{profile?.display_name || "مریم موسوی"}</strong>
               <small className="mt-1 block text-[13px] text-(--text-faint)">
-                مدیر ارشد
+                {profile?.role === "admin" ? "مدیر" : profile?.role === "editor" ? "ویراستار" : profile?.role === "author" ? "نویسنده" : "مدیر ارشد"}
               </small>
             </span>
-            <button
-              aria-label="خروج از حساب"
-              title="خروج"
-              className="grid size-10 place-items-center rounded-lg text-(--text-faint) hover:bg-white/10 hover:text-white"
-            >
-              <LogOut size={17} />
-            </button>
+            <SignOutButton />
           </div>
         </div>
       </aside>

@@ -1,11 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { CheckCircle2, FileText, Search, Star, Users, X } from "lucide-react";
 import { mockAuthors, type Author, type AuthorRole, type AuthorStatus } from "@/lib/authors-data";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { AuthorCard } from "./author-card";
 import { AuthorProfileDialog, DeleteAuthorDialog } from "./author-dialogs";
+import { authorsService } from "@/lib/authors-service";
 
 type Sort = "articles" | "views" | "newest" | "oldest";
 const selectClass = "h-10 rounded-(--radius-sm) border border-(--border) bg-white px-3 text-[13px] font-bold text-(--text-secondary) outline-none focus:border-(--focus-border)";
@@ -19,6 +20,7 @@ export function AuthorsManager() {
   const [profile, setProfile] = useState<Author | null>(null);
   const [pendingDelete, setPendingDelete] = useState<Author | null>(null);
   const [notice, setNotice] = useState("");
+  useEffect(() => { let active = true; authorsService.list().then((items) => { if (active) setAuthors(items); }).catch(() => undefined); return () => { active = false; }; }, []);
   const showNotice = (message: string) => { setNotice(message); window.setTimeout(() => setNotice(""), 2500); };
 
   const filtered = useMemo(() => authors.filter((author) => {
@@ -47,4 +49,3 @@ export function AuthorsManager() {
 }
 
 function articlePublishedCount(author: Author) { return Math.round(author.articleCount * author.publishedRate / 100); }
-

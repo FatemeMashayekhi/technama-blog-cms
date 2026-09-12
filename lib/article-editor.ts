@@ -1,4 +1,5 @@
 import { mockArticles } from "@/lib/posts-data";
+import { isSupabaseConfigured } from "@/lib/env";
 
 export type EditorArticleStatus = "draft" | "review" | "published" | "scheduled";
 
@@ -76,6 +77,17 @@ export async function saveMockArticle(data: ArticleFormData) {
   return { ...data, savedAt: new Date().toISOString() };
 }
 
+export async function saveArticleToCms(data: ArticleFormData, articleId?: string) {
+  if (!isSupabaseConfigured) return { ...(await saveMockArticle(data)), id: articleId };
+  const response = await fetch(articleId ? `/api/articles/${articleId}` : "/api/articles", {
+    method: articleId ? "PATCH" : "POST",
+    headers: { "Content-Type": "application/json" }, body: JSON.stringify(data),
+  });
+  const result = await response.json() as { ok: boolean; data?: { id: string }; error?: string };
+  if (!response.ok || !result.ok || !result.data) throw new Error(result.error || "ذخیره مقاله انجام نشد.");
+  return result.data;
+}
+
 export function validateArticle(data: ArticleFormData): ArticleFormErrors {
   const errors: ArticleFormErrors = {};
   if (!data.title.trim()) errors.title = "عنوان مقاله الزامی است.";
@@ -87,4 +99,3 @@ export function validateArticle(data: ArticleFormData): ArticleFormErrors {
   if (data.publishMode === "scheduled" && !data.publishAt) errors.publishAt = "تاریخ انتشار را انتخاب کنید.";
   return errors;
 }
-

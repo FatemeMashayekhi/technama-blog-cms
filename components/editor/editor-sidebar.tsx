@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { CalendarClock, ChevronDown, ImagePlus, SearchCheck, Tag, Trash2, UserRound, Upload } from "lucide-react";
 import { technologyCategories } from "@/lib/posts-data";
 import { editorAuthors, type ArticleFormData, type ArticleFormErrors } from "@/lib/article-editor";
+import { uploadMedia } from "@/lib/media-service";
 
 type EditorSidebarProps = { data: ArticleFormData; errors: ArticleFormErrors; onChange: (patch: Partial<ArticleFormData>) => void };
 
@@ -15,10 +16,11 @@ const fieldClass = "h-10 w-full rounded-(--radius-sm) border border-(--border) b
 
 export function EditorSidebar({ data, errors, onChange }: EditorSidebarProps) {
   const [tagValue, setTagValue] = useState("");
+  const [imageError, setImageError] = useState("");
   const imageInputRef = useRef<HTMLInputElement>(null);
   const author = editorAuthors.find((item) => item.id === data.authorId);
   const addTag = () => { const next = tagValue.trim(); if (next && !data.tags.includes(next)) onChange({ tags: [...data.tags, next] }); setTagValue(""); };
-  const selectImage = (file?: File) => { if (!file) return; const reader = new FileReader(); reader.onload = () => onChange({ featuredImage: String(reader.result), featuredImageName: file.name }); reader.readAsDataURL(file); };
+  const selectImage = async (file?: File) => { if (!file) return; setImageError(""); try { const asset = await uploadMedia(file); onChange({ featuredImage: asset.url, featuredImageName: asset.name }); } catch (error) { setImageError(error instanceof Error ? error.message : "آپلود تصویر انجام نشد."); } };
 
   return <aside className="space-y-3">
     <Section title="انتشار" icon={CalendarClock}>
@@ -42,7 +44,8 @@ export function EditorSidebar({ data, errors, onChange }: EditorSidebarProps) {
     </Section>
 
     <Section title="تصویر شاخص" icon={ImagePlus}>
-      <input ref={imageInputRef} type="file" accept="image/*" className="hidden" onChange={(event) => selectImage(event.target.files?.[0])} />
+      <input ref={imageInputRef} type="file" accept=".jpg,.jpeg,.png,.webp,.gif" className="hidden" onChange={(event) => { void selectImage(event.target.files?.[0]); }} />
+      {imageError && <p role="alert" className="mb-2 text-[12px] text-(--danger)">{imageError}</p>}
       {data.featuredImage ? <div><div className="aspect-video w-full rounded-(--radius-sm) bg-cover bg-center" style={{ backgroundImage: `url(${data.featuredImage})` }} role="img" aria-label="پیش‌نمایش تصویر شاخص" /><p className="mt-2 truncate text-[12px] text-(--text-muted)" dir="ltr">{data.featuredImageName}</p><div className="mt-3 flex gap-2"><button type="button" onClick={() => imageInputRef.current?.click()} className="flex h-10 flex-1 items-center justify-center gap-1.5 rounded-(--radius-sm) border border-(--border) text-[13px] font-bold text-(--text-secondary) hover:bg-(--surface-subtle)"><Upload size={13} /> جایگزینی</button><button type="button" onClick={() => onChange({ featuredImage: undefined, featuredImageName: undefined })} aria-label="حذف تصویر شاخص" className="grid size-10 place-items-center rounded-(--radius-sm) border border-(--danger-border) text-(--danger) hover:bg-(--danger-soft)"><Trash2 size={14} /></button></div></div> : <button type="button" onClick={() => imageInputRef.current?.click()} className="grid aspect-video w-full place-items-center rounded-(--radius-sm) border border-dashed border-(--border-strong) bg-(--surface-subtle) text-center hover:border-(--border-strong) hover:bg-(--surface-subtle)"><span><ImagePlus size={21} className="mx-auto text-(--text-muted)" /><strong className="mt-2 block text-[13px] text-(--text-secondary)">انتخاب تصویر</strong><small className="mt-1 block text-[14px] text-(--text-muted)">تصویر اصلی مقاله را انتخاب کنید</small></span></button>}
     </Section>
 
@@ -57,4 +60,3 @@ export function EditorSidebar({ data, errors, onChange }: EditorSidebarProps) {
     </Section>
   </aside>;
 }
-

@@ -16,8 +16,9 @@ for (const route of routes) {
 
 for (const route of ["/articles/typescript-scalable-architecture", "/authors/arman.dev", "/definitely-missing"]) {
   const response = await fetch(`${baseUrl}${route}`, { redirect: "manual" });
-  if (response.status !== 404) failures.push(`${route}: expected 404, received ${response.status}`);
-  else console.log(`OK 404 ${route}`);
+  const streamedNotFound = route.startsWith("/articles/") && response.status === 200 && (await response.text()).includes('name="robots" content="noindex"');
+  if (response.status !== 404 && !streamedNotFound) failures.push(`${route}: expected a not-found response, received ${response.status}`);
+  else console.log(`OK ${response.status}${streamedNotFound ? " streamed-not-found" : ""} ${route}`);
 }
 
 if (failures.length) {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { CheckCircle2, Clock3, FileText, Library } from "lucide-react";
 import type { ArticleStatus } from "@/lib/dashboard-data";
 import { mockArticles, type PostArticle } from "@/lib/posts-data";
@@ -11,6 +11,7 @@ import { ArticlesTable } from "./articles-table";
 import { BulkActions } from "./bulk-actions";
 import { DeleteConfirmationDialog } from "./delete-confirmation-dialog";
 import { PostsEmptyState } from "./empty-state";
+import { postsService } from "@/lib/posts-service";
 
 const PAGE_SIZE = 8;
 
@@ -30,6 +31,7 @@ export function PostsManager() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [pendingDeleteIds, setPendingDeleteIds] = useState<string[]>([]);
   const [notice, setNotice] = useState("");
+  useEffect(() => { let active = true; postsService.list().then((items) => { if (active) setArticles(items); }).catch(() => undefined); return () => { active = false; }; }, []);
 
   const filteredArticles = useMemo(() => {
     const normalizedQuery = query.trim().toLocaleLowerCase("fa");
@@ -65,13 +67,15 @@ export function PostsManager() {
     window.setTimeout(() => setNotice(""), 2600);
   };
 
-  const updateSelectedStatus = (nextStatus: ArticleStatus) => {
+  const updateSelectedStatus = async (nextStatus: ArticleStatus) => {
+    await Promise.all([...selectedIds].map((id) => postsService.status(id, nextStatus)));
     setArticles((items) => items.map((article) => selectedIds.has(article.id) ? { ...article, status: nextStatus, updatedAt: new Date().toISOString(), updatedLabel: "همین حالا" } : article));
     updateNotice(nextStatus === "published" ? "مقالات انتخاب‌شده منتشر شدند." : "مقالات انتخاب‌شده به پیش‌نویس منتقل شدند.");
     setSelectedIds(new Set());
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
+    await postsService.remove(pendingDeleteIds);
     const deleteSet = new Set(pendingDeleteIds);
     setArticles((items) => items.filter((article) => !deleteSet.has(article.id)));
     setSelectedIds((items) => new Set([...items].filter((id) => !deleteSet.has(id))));
@@ -117,7 +121,7 @@ export function PostsManager() {
               onSelect={(id) => setSelectedIds((current) => { const next = new Set(current); if (next.has(id)) next.delete(id); else next.add(id); return next; })}
               onSelectAll={() => setSelectedIds((current) => { const next = new Set(current); visibleArticles.forEach((article) => allVisibleSelected ? next.delete(article.id) : next.add(article.id)); return next; })}
               onDelete={(article) => setPendingDeleteIds([article.id])}
-              onStatusChange={(id) => { setArticles((items) => items.map((article) => article.id === id ? { ...article, status: statusOrder[article.status], updatedAt: new Date().toISOString(), updatedLabel: "همین حالا" } : article)); updateNotice("وضعیت مقاله تغییر کرد."); }}
+              onStatusChange={(id) => { const article = articles.find((item) => item.id === id); if (!article) return; const nextStatus = statusOrder[article.status]; void postsService.status(id, nextStatus).then(() => { setArticles((items) => items.map((item) => item.id === id ? { ...item, status: nextStatus, updatedAt: new Date().toISOString(), updatedLabel: "همین حالا" } : item)); updateNotice("وضعیت مقاله تغییر کرد."); }).catch(() => updateNotice("تغییر وضعیت انجام نشد.")); }}
               onCopy={async (article) => { try { await navigator.clipboard.writeText(`${window.location.origin}/articles/${article.slug}`); updateNotice("لینک عمومی مقاله کپی شد."); } catch { updateNotice("امکان کپی لینک وجود نداشت."); } }}
             />
             <Pagination page={safePage} pageCount={pageCount} start={pageStart + 1} end={Math.min(pageStart + PAGE_SIZE, filteredArticles.length)} total={filteredArticles.length} onPageChange={setPage} />

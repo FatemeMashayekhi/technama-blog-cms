@@ -8,7 +8,7 @@ import { roleLabels, saveMockAuthor, validateAuthor, type AuthorFormData, type A
 
 const inputClass = "mt-1.5 h-11 w-full rounded-(--radius-sm) border border-(--border) bg-(--surface-subtle) px-3 text-[14px] text-(--text-secondary) outline-none transition-colors focus:border-(--focus-border) focus:bg-white";
 
-export function AuthorForm({ mode, initialData }: { mode: "create" | "edit"; initialData: AuthorFormData }) {
+export function AuthorForm({ mode, initialData, editingId }: { mode: "create" | "edit"; initialData: AuthorFormData; editingId?: string }) {
   const router = useRouter();
   const avatarInput = useRef<HTMLInputElement>(null);
   const [data, setData] = useState(initialData);
@@ -24,7 +24,8 @@ export function AuthorForm({ mode, initialData }: { mode: "create" | "edit"; ini
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length) { document.getElementById("author-name")?.focus(); return; }
     setSaving(true);
-    await saveMockAuthor(data);
+    try { await saveMockAuthor(data, mode === "create", editingId); }
+    catch (error) { setSaving(false); setNotice(error instanceof Error ? error.message : "ذخیره نویسنده انجام نشد."); return; }
     setSaving(false);
     setNotice(mode === "create" ? "نویسنده با موفقیت ایجاد شد." : "اطلاعات نویسنده با موفقیت به‌روزرسانی شد.");
     window.setTimeout(() => router.push("/admin/authors"), 900);

@@ -25,5 +25,6 @@ export const getCategory = (id: string) => mockCategories.find((item) => item.id
 export const getTag = (id: string) => mockTags.find((item) => item.id === id) ?? null;
 export const categoryToForm = (item: Category): CategoryFormData => ({ name: item.name, slug: item.slug, description: item.description, icon: item.icon, color: item.color, parentId: item.parentId ?? "", coverImage: item.coverImage, seo: { ...item.seo } });
 export const tagToForm = (item: Tag): TagFormData => ({ name: item.name, slug: item.slug });
-export const saveMockTaxonomy = async <T,>(data: T) => { await new Promise((resolve) => setTimeout(resolve, 600)); return data; };
+export const saveMockTaxonomy = async <T,>(data: T) => { if (isSupabaseConfigured) { const isCategory = typeof data === "object" && data !== null && "description" in data; const response = await fetch(isCategory ? "/api/categories" : "/api/tags", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) }); const result = await response.json() as { ok: boolean; error?: string }; if (!response.ok || !result.ok) throw new Error(result.error || "ذخیره ساختار محتوا انجام نشد."); return data; } await new Promise((resolve) => setTimeout(resolve, 600)); return data; };
+import { isSupabaseConfigured } from "@/lib/env";
 

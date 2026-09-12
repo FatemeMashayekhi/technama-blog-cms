@@ -43,7 +43,7 @@ export const emptyAuthor: AuthorFormData = { name: "", username: "", email: "", 
 
 export function getMockAuthor(id: string) { return mockAuthors.find((author) => author.id === id) ?? null; }
 export function authorToForm(author: Author): AuthorFormData { return { name: author.name, username: author.username, email: author.email, avatar: author.avatar, bio: author.bio, role: author.role, status: author.status, socialLinks: { ...author.socialLinks } }; }
-export async function saveMockAuthor(data: AuthorFormData) { await new Promise((resolve) => setTimeout(resolve, 650)); return data; }
+export async function saveMockAuthor(data: AuthorFormData, invite = false, editingId?: string) { if (isSupabaseConfigured && (invite || editingId)) { const response = await fetch(editingId ? `/api/profiles/${editingId}` : "/api/profiles", { method: editingId ? "PATCH" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(editingId ? { displayName: data.name, username: data.username, email: data.email, avatarUrl: data.avatar ?? null, bio: data.bio, role: data.role, isActive: data.status === "active" } : { email: data.email, displayName: data.name, role: data.role }) }); const result = await response.json() as { ok: boolean; error?: string }; if (!response.ok || !result.ok) throw new Error(result.error || "ذخیره نویسنده انجام نشد."); return data; } await new Promise((resolve) => setTimeout(resolve, 650)); return data; }
 
 export function validateAuthor(data: AuthorFormData): AuthorFormErrors {
   const errors: AuthorFormErrors = {};
@@ -56,4 +56,4 @@ export function validateAuthor(data: AuthorFormData): AuthorFormErrors {
 }
 
 export const roleLabels: Record<AuthorRole, string> = { admin: "مدیر", editor: "ویراستار", author: "نویسنده" };
-
+import { isSupabaseConfigured } from "@/lib/env";

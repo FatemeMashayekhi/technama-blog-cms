@@ -3,19 +3,19 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Check, Clock3, Eye, FileText, LoaderCircle, Save, Send } from "lucide-react";
-import { type ArticleFormData, type ArticleFormErrors, saveMockArticle, validateArticle } from "@/lib/article-editor";
+import { type ArticleFormData, type ArticleFormErrors, saveArticleToCms, validateArticle } from "@/lib/article-editor";
 import { RichTextEditor } from "./rich-text-editor";
 import { EditorSidebar } from "./editor-sidebar";
 import { ArticlePreview } from "./article-preview";
 import { UnsavedChangesDialog } from "./unsaved-changes-dialog";
 
-type ArticleEditorProps = { mode: "create" | "edit"; initialData: ArticleFormData };
+type ArticleEditorProps = { mode: "create" | "edit"; initialData: ArticleFormData; articleId?: string };
 
 function createSlug(title: string) {
   return title.trim().toLocaleLowerCase("fa").replace(/[^؀-ۿa-z0-9\s-]/gi, "").replace(/\s+/g, "-").replace(/-+/g, "-");
 }
 
-export function ArticleEditor({ mode, initialData }: ArticleEditorProps) {
+export function ArticleEditor({ mode, initialData, articleId: initialArticleId }: ArticleEditorProps) {
   const router = useRouter();
   const [data, setData] = useState(initialData);
   const [errors, setErrors] = useState<ArticleFormErrors>({});
@@ -26,6 +26,7 @@ export function ArticleEditor({ mode, initialData }: ArticleEditorProps) {
   const [pendingHref, setPendingHref] = useState("");
   const [notice, setNotice] = useState("");
   const autosaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [articleId, setArticleId] = useState(initialArticleId);
 
   const plainContent = useMemo(() => data.content.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim(), [data.content]);
   const wordCount = plainContent ? plainContent.split(" ").length : 0;
@@ -43,12 +44,12 @@ export function ArticleEditor({ mode, initialData }: ArticleEditorProps) {
     if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
     autosaveTimer.current = setTimeout(async () => {
       setSaveState("saving");
-      await saveMockArticle(data);
-      setDirty(false);
-      setSaveState("saved");
+      if (!articleId) { setSaveState("unsaved"); return; }
+      try { await saveArticleToCms(data, articleId); setDirty(false); setSaveState("saved"); }
+      catch (error) { setSaveState("unsaved"); setNotice(error instanceof Error ? error.message : "ذخیره خودکار انجام نشد."); window.setTimeout(() => setNotice(""), 2800); }
     }, 1800);
     return () => { if (autosaveTimer.current) clearTimeout(autosaveTimer.current); };
-  }, [data, dirty]);
+  }, [articleId, data, dirty]);
 
   useEffect(() => {
     const beforeUnload = (event: BeforeUnloadEvent) => { if (dirty) event.preventDefault(); };
@@ -71,8 +72,12 @@ export function ArticleEditor({ mode, initialData }: ArticleEditorProps) {
   const saveDraft = async (silent = false) => {
     if (!data.title.trim()) { setErrors((current) => ({ ...current, title: "عنوان مقاله الزامی است." })); document.getElementById("article-title")?.focus(); return false; }
     setSaveState("saving");
-    await saveMockArticle({ ...data, status: "draft" });
-    setData((current) => ({ ...current, status: "draft" }));
+    const draftData = { ...data, slug: data.slug || createSlug(data.title) || `draft-${Date.now()}`, status: "draft" as const };
+    try {
+      const saved = await saveArticleToCms(draftData, articleId);
+      if (saved.id) setArticleId(saved.id);
+    } catch (error) { setSaveState("unsaved"); showNotice(error instanceof Error ? error.message : "ذخیره مقاله انجام نشد."); return false; }
+    setData(draftData);
     setDirty(false);
     setSaveState("saved");
     if (!silent) showNotice("پیش‌نویس با موفقیت ذخیره شد.");
@@ -84,7 +89,10 @@ export function ArticleEditor({ mode, initialData }: ArticleEditorProps) {
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length) { showNotice("لطفاً خطاهای فرم را برطرف کنید."); document.getElementById("article-title")?.scrollIntoView({ behavior: "smooth", block: "center" }); return; }
     setSaveState("saving");
-    await saveMockArticle({ ...data, status: data.publishMode === "scheduled" ? "scheduled" : "published" });
+    try {
+      const saved = await saveArticleToCms({ ...data, status: data.publishMode === "scheduled" ? "scheduled" : "published" }, articleId);
+      if (saved.id) setArticleId(saved.id);
+    } catch (error) { setSaveState("unsaved"); showNotice(error instanceof Error ? error.message : "انتشار مقاله انجام نشد."); return; }
     setData((current) => ({ ...current, status: current.publishMode === "scheduled" ? "scheduled" : "published" }));
     setDirty(false);
     setSaveState("saved");
@@ -125,4 +133,3 @@ export function ArticleEditor({ mode, initialData }: ArticleEditorProps) {
     {notice && <div className="fixed bottom-5 left-5 z-[90] rounded-(--radius-sm) bg-(--brand-navy) px-4 py-3 text-[14px] font-bold text-white shadow-[0_10px_30px_rgba(16,35,49,.2)]" role="status">{notice}</div>}
   </>;
 }
-

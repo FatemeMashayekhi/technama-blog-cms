@@ -8,7 +8,6 @@ import { MediaUploader } from "./media-uploader";
 
 export function MediaWorkspace() {
   const [assets, setAssets] = useState<MediaAsset[]>([]); const [loading, setLoading] = useState(true);
-  useEffect(() => { let active = true; mediaService.list().then((items) => { if (active) { setAssets(items); setLoading(false); } }); return () => { active = false; }; }, []);
+  useEffect(() => { let active = true; mediaService.list().then((items) => { if (active) setAssets(items); }).catch(() => undefined).finally(() => { if (active) setLoading(false); }); return () => { active = false; }; }, []);
   return <div className="space-y-5"><MediaUploader onUploaded={(items) => setAssets((current) => [...items, ...current])}/><MediaManager assets={assets} loading={loading} onAssetsChange={setAssets}/></div>;
 }
-
