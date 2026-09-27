@@ -1,13 +1,53 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { Hash } from "lucide-react";
+import { Compass, Hash, Layers3 } from "lucide-react";
+import { NewsletterSection } from "@/components/public/newsletter-section";
 import { PublicFooter } from "@/components/public/public-footer";
 import { PublicHeader } from "@/components/public/public-header";
+import { TagsDirectory, type TagDirectoryItem } from "@/components/public/tags/tags-directory";
 import { getPublicTags } from "@/lib/public-tag-service";
 
-export const metadata: Metadata = { title: "برچسب‌ها", description: "موضوعات و کلیدواژه‌های آرشیو تک‌نما را مرور کنید.", alternates: { canonical: "/tags" } };
+export const metadata: Metadata = {
+  title: "برچسب‌ها؛ مسیرهای موضوعی فناوری",
+  description: "فناوری‌ها، ابزارها و موضوعات تخصصی آرشیو تک‌نما را بر اساس برچسب کشف و دنبال کنید.",
+  alternates: { canonical: "/tags" },
+};
 
 export default function TagsPage() {
   const tags = getPublicTags();
-  return <div className="public-site min-h-screen"><PublicHeader/><main id="main-content" tabIndex={-1}><header className="border-b border-(--border) bg-white"><div className="mx-auto max-w-360 px-4 py-14 md:px-7 md:py-20"><p className="editorial-kicker">نمایه موضوعی</p><h1 className="mt-3 text-[36px] font-black tracking-[-.05em] sm:text-[50px]">برچسب‌های تک‌نما</h1><p className="mt-5 max-w-2xl text-[17px] leading-8 text-(--text-secondary)">برای رسیدن سریع به یک فناوری، ابزار یا حوزه تخصصی از برچسب‌ها استفاده کنید.</p></div></header><section className="mx-auto max-w-5xl px-4 py-12 md:px-7 md:py-16"><div className="flex flex-wrap gap-3">{tags.map((tag, index) => <Link key={tag.id} href={`/tags/${tag.slug}`} className={`group inline-flex min-h-13 items-center gap-2 rounded-full border px-5 font-black transition hover:-translate-y-0.5 hover:border-(--editorial-coral) hover:text-(--editorial-coral) ${index < 3 ? "border-(--public-ink) bg-(--public-ink) text-white hover:bg-white" : "border-(--border-strong) bg-white text-(--public-ink)"}`}><Hash size={15}/>{tag.name}<span className={`text-[12px] ${index < 3 ? "text-white/55 group-hover:text-(--text-muted)" : "text-(--text-muted)"}`}>{tag.articles.length.toLocaleString("fa-IR")}</span></Link>)}</div></section></main><PublicFooter/></div>;
+  const directory: TagDirectoryItem[] = tags.map((tag) => ({
+    id: tag.id,
+    name: tag.name,
+    slug: tag.slug,
+    articleCount: tag.articles.length,
+    latestArticle: tag.articles[0]?.title,
+  }));
+  const activeTags = directory.filter((tag) => tag.articleCount > 0).length;
+  const connections = directory.reduce((total, tag) => total + tag.articleCount, 0);
+
+  return (
+    <div className="public-site min-h-screen">
+      <PublicHeader />
+      <main id="main-content" tabIndex={-1}>
+        <header className="relative overflow-hidden border-b border-(--border) bg-(--public-paper)">
+          <span aria-hidden="true" className="absolute -left-10 -top-24 font-mono text-[330px] font-black leading-none text-(--public-ink)/[.035]">#</span>
+          <div aria-hidden="true" className="absolute -right-24 bottom-0 size-96 rounded-full bg-[#d7ebe6]/45 blur-3xl" />
+          <div className="relative mx-auto grid max-w-360 gap-10 px-4 py-14 md:px-7 md:py-20 lg:grid-cols-[minmax(0,1.1fr)_minmax(320px,.7fr)] lg:items-end lg:py-24">
+            <div>
+              <p className="editorial-kicker flex items-center gap-2"><Hash size={15} /> نمایه موضوعی تک‌نما</p>
+              <h1 className="mt-4 max-w-4xl text-[40px] font-black leading-[1.45] tracking-[-.055em] text-balance text-(--public-ink) sm:text-[54px]">از یک کلیدواژه، <span className="text-(--editorial-coral)">مسیر مطالعه</span> بسازید.</h1>
+              <p className="mt-5 max-w-2xl text-[16px] leading-8 text-(--text-secondary)">برچسب‌ها نقطه اتصال مقاله‌های ما هستند؛ از یک فناوری یا مفهوم شروع کنید و روایت‌های مرتبط را در سراسر آرشیو دنبال کنید.</p>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="rounded-[22px] border border-(--border) bg-white/78 p-5 shadow-[0_12px_36px_rgba(16,42,58,.05)] backdrop-blur"><Layers3 className="text-(--brand-teal)" size={20} /><strong className="mt-6 block font-mono text-[32px] font-black tracking-[-.06em] text-(--public-ink)">{directory.length.toLocaleString("fa-IR")}</strong><span className="text-[12px] font-bold text-(--text-muted)">برچسب در نمایه</span></div>
+              <div className="rounded-[22px] border border-(--border) bg-white/78 p-5 shadow-[0_12px_36px_rgba(16,42,58,.05)] backdrop-blur"><Compass className="text-(--editorial-coral)" size={20} /><strong className="mt-6 block font-mono text-[32px] font-black tracking-[-.06em] text-(--public-ink)">{connections.toLocaleString("fa-IR")}</strong><span className="text-[12px] font-bold text-(--text-muted)">پیوند به مطالب</span></div>
+              <p className="col-span-2 px-1 text-[12px] leading-6 text-(--text-muted)">{activeTags.toLocaleString("fa-IR")} موضوع اکنون محتوای قابل مطالعه دارد و این نمایه همراه آرشیو رشد می‌کند.</p>
+            </div>
+          </div>
+        </header>
+        <TagsDirectory tags={directory} />
+        <NewsletterSection />
+      </main>
+      <PublicFooter />
+    </div>
+  );
 }
