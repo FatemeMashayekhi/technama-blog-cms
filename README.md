@@ -91,14 +91,15 @@ Legacy dashboard routes such as `/dashboard` and `/posts` redirect to their corr
 
 ## Backend and Database Setup
 
-The application falls back to demo data when Supabase environment variables are unavailable. Complete the following steps to enable persistent storage and authentication:
+The application uses Supabase when it is available and falls back to the versioned editorial seed only when the database is unavailable or empty. Complete the following steps to enable persistent storage and authentication:
 
 1. Create a new Supabase project.
 2. Copy `.env.example` to `.env.local` and fill in the values from the Supabase project settings.
 3. Run `supabase/migrations/202609120001_initial_cms.sql` using the Supabase SQL Editor or Supabase CLI.
 4. Start the application and create the first account at `/login`.
-5. The first account receives the `admin` role; subsequent accounts receive the `author` role.
-6. After creating the first administrator, set `NEXT_PUBLIC_ALLOW_SIGNUP=false` in `.env.local`. New team members can then be invited from the dashboard.
+5. Run `npm run seed:all` once to create the editorial author profiles and upsert the curated public articles, categories, and article-tag relations. The command is idempotent and requires `SUPABASE_SERVICE_ROLE_KEY`.
+6. The first account receives the `admin` role; subsequent accounts receive the `author` role.
+7. After creating the first administrator, set `NEXT_PUBLIC_ALLOW_SIGNUP=false` in `.env.local`. New team members can then be invited from the dashboard.
 
 On Windows PowerShell:
 
@@ -192,7 +193,7 @@ The operational CMS core is connected to the real backend, including:
 - Newsletter subscriptions
 - Site settings
 
-Services retain a demo fallback so the interface can still be reviewed without Supabase configuration. The Analytics dashboard currently uses sample data; live analytics requires event collection and aggregation infrastructure.
+Public content services retain a versioned editorial fallback so every published route remains reviewable if Supabase is temporarily unavailable. The Analytics dashboard currently uses sample data; live analytics requires event collection and aggregation infrastructure.
 
 ## ChatGPT Collaboration and GitHub History
 

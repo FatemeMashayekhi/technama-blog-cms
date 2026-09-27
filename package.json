@@ -12,7 +12,10 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "node --test tests/*.test.mjs",
-    "test:smoke": "node scripts/smoke-test.mjs"
+    "test:smoke": "node scripts/smoke-test.mjs",
+    "seed:authors": "node scripts/seed-authors.mjs",
+    "seed:content": "node scripts/seed-editorial-content.mjs",
+    "seed:all": "npm run seed:authors && npm run seed:content"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

@@ -13,9 +13,9 @@ import { getAuthorByUsername, getPublicAuthorData, getPublicAuthorUsernames } fr
 
 type Props = { params: Promise<{ id: string }> };
 
-export const dynamicParams = false;
-export function generateStaticParams() {
-  return getPublicAuthorUsernames().map((id) => ({ id }));
+export const dynamicParams = true;
+export async function generateStaticParams() {
+  return (await getPublicAuthorUsernames()).map((id) => ({ id }));
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {

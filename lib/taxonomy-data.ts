@@ -13,6 +13,7 @@ export const mockCategories: Category[] = [
   { id: "startup", name: "استارتاپ", slug: "startup", description: "کسب‌وکارهای نوآور، محصول و روایت بنیان‌گذاران", icon: "Rocket", color: "#836327", articleCount: 48, views: 126900, createdAt: "2023-06-03", seo: { title: "استارتاپ و نوآوری", description: "تحلیل اکوسیستم استارتاپی و ساخت محصول.", canonicalUrl: "https://technama.ir/category/startup" } },
   { id: "hardware", name: "سخت‌افزار", slug: "hardware", description: "تراشه‌ها، رایانه‌ها و فناوری‌های پردازشی", icon: "Cpu", color: "#5d6932", articleCount: 53, views: 118320, createdAt: "2023-07-08", seo: { title: "سخت‌افزار و تراشه‌ها", description: "بررسی صنعت سخت‌افزار و محصولات پردازشی.", canonicalUrl: "https://technama.ir/category/hardware" } },
   { id: "gadgets", name: "گجت‌ها", slug: "gadgets", description: "بررسی محصولات دیجیتال و ابزارهای هوشمند روزمره", icon: "Smartphone", color: "#745579", articleCount: 39, views: 102400, createdAt: "2023-08-17", seo: { title: "گجت‌ها و محصولات دیجیتال", description: "بررسی تازه‌ترین ابزارها و گجت‌های هوشمند.", canonicalUrl: "https://technama.ir/category/gadgets" } },
+  { id: "tech-news", name: "اخبار فناوری", slug: "tech-news", description: "مرور خبرها و رویدادهایی که مسیر صنعت فناوری را تغییر می‌دهند", icon: "Newspaper", color: "#416a79", articleCount: 1, views: 7340, createdAt: "2023-09-01", seo: { title: "اخبار و رویدادهای فناوری", description: "مرور تحلیلی مهم‌ترین خبرها و رویدادهای دنیای فناوری.", canonicalUrl: "https://technama.ir/category/tech-news" } },
 ];
 
 export const mockTags: Tag[] = [

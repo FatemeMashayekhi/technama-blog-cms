@@ -30,25 +30,36 @@ export function mapDatabaseArticle(row: DbArticle): PublicArticle {
 }
 
 async function loadDbArticle(slug: string): Promise<PublicArticleDetail | null> {
-  const supabase = await createSupabaseServerClient();
-  const { data: row, error } = await supabase.from("articles").select("*,author:profiles!articles_author_id_fkey(*),category:categories(*),article_tags(tag:tags(*))").eq("slug", slug).eq("status", "published").lte("published_at", new Date().toISOString()).maybeSingle();
-  if (error || !row) return null;
-  const base = mapDatabaseArticle(row);
-  const { data: commentRows } = await supabase.rpc("get_public_comments", { target_article_id: row.id });
-  const comments: MagazineComment[] = (commentRows ?? []).map((comment: DbArticle) => ({ id: comment.id, content: comment.content, commenter: { name: comment.name, email: "", initials: initials(comment.name), color: "bg-[#dbe8f2] text-[#315d78]" }, article: { id: row.id, title: row.title, slug: row.slug }, author: { id: row.author.id, name: row.author.display_name, initials: initials(row.author.display_name) }, status: "approved", likes: comment.likes, createdAt: comment.created_at, parentId: comment.parent_id ?? undefined }));
-  const tags: Tag[] = (row.article_tags ?? []).filter((item: DbArticle) => item.tag).map((item: DbArticle) => ({ id: item.tag.id, name: item.tag.name, slug: item.tag.slug, articleCount: 0, createdAt: item.tag.created_at }));
-  const authorName = row.author.display_name as string;
-  return { ...base, content: htmlToBlocks(row.content), tags, approvedComments: comments, authorDetails: { id: row.author.id, name: authorName, username: row.author.username, email: "", avatar: row.author.avatar_url ?? undefined, avatarColor: "bg-[#dbe8f2] text-[#254e6e]", initials: initials(authorName), bio: row.author.bio ?? "", role: row.author.role, status: row.author.is_active ? "active" : "inactive", articleCount: 0, totalViews: 0, publishedRate: 0, joinedAt: row.author.created_at, joinedLabel: "عضو تحریریه", socialLinks: { website: "", linkedin: "", twitter: "", github: "" }, recentArticles: [] } };
+  try {
+    const supabase = await createSupabaseServerClient();
+    const { data: row, error } = await supabase.from("articles").select("*,author:profiles!articles_author_id_fkey(*),category:categories(*),article_tags(tag:tags(*))").eq("slug", slug).eq("status", "published").lte("published_at", new Date().toISOString()).maybeSingle();
+    if (error || !row) return null;
+    const base = mapDatabaseArticle(row);
+    const { data: commentRows } = await supabase.rpc("get_public_comments", { target_article_id: row.id });
+    const comments: MagazineComment[] = (commentRows ?? []).map((comment: DbArticle) => ({ id: comment.id, content: comment.content, commenter: { name: comment.name, email: "", initials: initials(comment.name), color: "bg-[#dbe8f2] text-[#315d78]" }, article: { id: row.id, title: row.title, slug: row.slug }, author: { id: row.author.id, name: row.author.display_name, initials: initials(row.author.display_name) }, status: "approved", likes: comment.likes, createdAt: comment.created_at, parentId: comment.parent_id ?? undefined }));
+    const tags: Tag[] = (row.article_tags ?? []).filter((item: DbArticle) => item.tag).map((item: DbArticle) => ({ id: item.tag.id, name: item.tag.name, slug: item.tag.slug, articleCount: 0, createdAt: item.tag.created_at }));
+    const authorName = row.author.display_name as string;
+    return { ...base, content: htmlToBlocks(row.content), tags, approvedComments: comments, authorDetails: { id: row.author.id, name: authorName, username: row.author.username, email: "", avatar: row.author.avatar_url ?? undefined, avatarColor: "bg-[#dbe8f2] text-[#254e6e]", initials: initials(authorName), bio: row.author.bio ?? "", role: row.author.role, status: row.author.is_active ? "active" : "inactive", articleCount: 0, totalViews: 0, publishedRate: 0, joinedAt: row.author.created_at, joinedLabel: "عضو تحریریه", socialLinks: { website: "", linkedin: "", twitter: "", github: "" }, recentArticles: [] } };
+  } catch {
+    return null;
+  }
 }
 
 export async function getArticleBySlug(slug: string): Promise<PublicArticleDetail | null> {
-  if (isSupabaseConfigured) return loadDbArticle(slug);
-  const article = publishedPublicArticles.find((item) => item.slug === slug);
-  return article ? createArticleDetail(article) : null;
+  const localArticle = publishedPublicArticles.find((item) => item.slug === slug);
+  if (!isSupabaseConfigured) return localArticle ? createArticleDetail(localArticle) : null;
+  const databaseArticle = await loadDbArticle(slug);
+  return databaseArticle ?? (localArticle ? createArticleDetail(localArticle) : null);
 }
 export async function getRelatedArticles(article: PublicArticle): Promise<PublicArticle[]> {
-  if (!isSupabaseConfigured) return publishedPublicArticles.filter((item) => item.id !== article.id).sort((a, b) => Number(b.category.id === article.category.id) - Number(a.category.id === article.category.id)).slice(0, 3);
-  const { data } = await (await createSupabaseServerClient()).from("articles").select("*,author:profiles!articles_author_id_fkey(*),category:categories(*)").eq("status", "published").neq("id", article.id).lte("published_at", new Date().toISOString()).order("published_at", { ascending: false }).limit(3);
-  return (data ?? []).map(mapDatabaseArticle);
+  const localRelated = () => publishedPublicArticles.filter((item) => item.id !== article.id).sort((a, b) => Number(b.category.id === article.category.id) - Number(a.category.id === article.category.id)).slice(0, 3);
+  if (!isSupabaseConfigured || publishedPublicArticles.some((item) => item.id === article.id)) return localRelated();
+  try {
+    const { data, error } = await (await createSupabaseServerClient()).from("articles").select("*,author:profiles!articles_author_id_fkey(*),category:categories(*)").eq("status", "published").neq("id", article.id).lte("published_at", new Date().toISOString()).order("published_at", { ascending: false }).limit(3);
+    if (error || !data?.length) return localRelated();
+    return data.map(mapDatabaseArticle);
+  } catch {
+    return localRelated();
+  }
 }
 export function getPublishedArticleSlugs() { return publishedPublicArticles.map((item) => item.slug); }

@@ -1,4 +1,5 @@
 import { createServerClient } from "@supabase/ssr";
+import type { User } from "@supabase/supabase-js";
 import { NextResponse, type NextRequest } from "next/server";
 import { getSupabaseEnvironment, isSupabaseConfigured } from "@/lib/env";
 
@@ -16,8 +17,19 @@ export async function updateSupabaseSession(request: NextRequest) {
       },
     },
   });
-  const { data: { user } } = await supabase.auth.getUser();
   const path = request.nextUrl.pathname;
+  let user: User | null = null;
+  try {
+    const result = await supabase.auth.getUser();
+    user = result.data.user;
+  } catch {
+    if (path.startsWith("/admin")) {
+      const loginUrl = new URL("/login", request.url);
+      loginUrl.searchParams.set("next", path);
+      return NextResponse.redirect(loginUrl);
+    }
+    return response;
+  }
   if (path.startsWith("/admin") && !user) {
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("next", path);
