@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import {
   BarChart3,
   BookOpenText,
@@ -17,6 +17,7 @@ import {
   Images,
 } from "lucide-react";
 import { SignOutButton } from "@/components/auth/sign-out-button";
+import { useDashboardSession } from "@/components/layout/dashboard-session-provider";
 
 const navigation = [
   { label: "داشبورد", icon: LayoutDashboard, href: "/admin/dashboard" },
@@ -24,16 +25,28 @@ const navigation = [
   { label: "دسته‌بندی‌ها", icon: FolderTree, href: "/admin/categories" },
   { label: "نویسندگان", icon: Users, href: "/admin/authors" },
   { label: "رسانه", icon: Images, href: "/admin/media" },
-  { label: "دیدگاه‌ها", icon: MessageSquareText, href: "/admin/comments", count: 8 },
+  { label: "دیدگاه‌ها", icon: MessageSquareText, href: "/admin/comments" },
   { label: "آمار و تحلیل", icon: BarChart3, href: "/admin/analytics" },
 ];
 
-type SidebarProps = { open?: boolean; onClose?: () => void };
+type SidebarProps = { open?: boolean; onClose?: () => void; pendingCommentCount?: number };
 
-export function Sidebar({ open = false, onClose }: SidebarProps) {
+export function Sidebar({ open = false, onClose, pendingCommentCount = 0 }: SidebarProps) {
   const pathname = usePathname();
-  const [profile, setProfile] = useState<{ display_name: string; role: "admin" | "editor" | "author" } | null>(null);
-  useEffect(() => { let active = true; fetch("/api/me").then((response) => response.json()).then((result) => { if (active && result.ok) setProfile(result.data); }).catch(() => undefined); return () => { active = false; }; }, []);
+  const user = useDashboardSession();
+  const initials = user.name.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join("");
+  const roleLabel = user.role === "admin" ? "مدیر" : user.role === "editor" ? "ویراستار" : "نویسنده";
+  useEffect(() => {
+    if (!open) return;
+    const previousOverflow = document.body.style.overflow;
+    const closeWithEscape = (event: KeyboardEvent) => { if (event.key === "Escape") onClose?.(); };
+    document.body.style.overflow = "hidden";
+    document.addEventListener("keydown", closeWithEscape);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", closeWithEscape);
+    };
+  }, [onClose, open]);
 
   return (
     <>
@@ -106,26 +119,10 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
                 >
                   <item.icon size={18} strokeWidth={isActive ? 2.2 : 1.8} />
                   <span className="flex-1">{item.label}</span>
-                  {item.count && !isActive ? <span className="rounded-full bg-(--brand-navy) px-2 py-0.5 text-[13px] text-(--text-on-dark-muted)">{item.count}</span> : !isActive && <ChevronLeft size={14} className="opacity-35" />}
+                  {item.href === "/admin/comments" && pendingCommentCount > 0 ? <span className="rounded-full bg-white/10 px-2 py-0.5 text-[11px] font-bold text-white">{pendingCommentCount.toLocaleString("fa-IR")}</span> : !isActive && <ChevronLeft size={14} className="opacity-35" />}
                 </Link>
               ) : (
-                <button
-                  key={item.label}
-                  type="button"
-                  disabled
-                  title="در مرحله بعدی پروژه"
-                  className="group flex h-11 w-full cursor-not-allowed items-center gap-3 rounded-(--radius-sm) px-3 text-[13px] text-(--text-faint)"
-                >
-                  <item.icon size={18} strokeWidth={1.8} />
-                  <span className="flex-1 text-right">{item.label}</span>
-                  {item.count ? (
-                    <span className="rounded-full bg-(--brand-navy) px-2 py-0.5 text-[13px] text-(--text-on-dark-muted)">
-                      {item.count}
-                    </span>
-                  ) : (
-                    <ChevronLeft size={14} className="opacity-35" />
-                  )}
-                </button>
+                null
               );
             })}
           </div>
@@ -137,16 +134,18 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
         </nav>
 
         <div className="border-t border-white/10 p-3">
-          <div className="flex items-center gap-3 rounded-(--radius) px-3 py-3 hover:bg-white/5">
+          <div className="flex items-center gap-2 rounded-(--radius) px-2 py-2 hover:bg-white/5">
+            <Link href="/admin/settings?section=profile" onClick={onClose} className="flex min-w-0 flex-1 items-center gap-3 rounded-lg px-1 py-1" aria-label={`نمایه ${user.name}`}>
             <span className="grid size-10 shrink-0 place-items-center rounded-full bg-(--surface-muted) text-xs font-bold text-(--brand-teal)">
-              {profile?.display_name.split(/\s+/).slice(0, 2).map((part) => part[0]).join("") || "مم"}
+              {initials}
             </span>
             <span className="min-w-0 flex-1">
-              <strong className="block truncate text-xs">{profile?.display_name || "مریم موسوی"}</strong>
+              <strong className="block truncate text-xs">{user.name}</strong>
               <small className="mt-1 block text-[13px] text-(--text-faint)">
-                {profile?.role === "admin" ? "مدیر" : profile?.role === "editor" ? "ویراستار" : profile?.role === "author" ? "نویسنده" : "مدیر ارشد"}
+                {roleLabel}
               </small>
             </span>
+            </Link>
             <SignOutButton />
           </div>
         </div>

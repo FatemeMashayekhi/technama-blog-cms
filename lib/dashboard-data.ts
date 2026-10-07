@@ -1,106 +1,137 @@
 export type ArticleStatus = "published" | "draft" | "review";
+export type AnalyticsRange = "7d" | "30d" | "90d";
+export type DashboardRole = "admin" | "editor" | "author";
+export type DashboardSearchKind = "article" | "author" | "category";
+export type DashboardNotificationType = "comment" | "article" | "system";
 
-export type Article = {
-  id: number;
-  title: string;
-  author: { name: string; initials: string; color: string };
-  category: string;
-  status: ArticleStatus;
-  views: string;
-  date: string;
+export type DashboardUser = {
+  id: string;
+  name: string;
+  email: string;
+  avatar?: string;
+  role: DashboardRole;
 };
 
-export const articles: Article[] = [
-  {
-    id: 1,
-    title: "آینده هوش مصنوعی مولد در توسعه نرم‌افزار",
-    author: {
-      name: "مریم احمدی",
-      initials: "ما",
-      color: "bg-[#dbe8f2] text-[#254e6e]",
-    },
-    category: "هوش مصنوعی",
-    status: "published",
-    views: "۱۲٬۴۸۰",
-    date: "۱۸ شهریور ۱۴۰۵",
-  },
-  {
-    id: 2,
-    title: "چرا معماری Server Components اهمیت دارد؟",
-    author: {
-      name: "علی رضایی",
-      initials: "عر",
-      color: "bg-[#e8e2f2] text-[#604b78]",
-    },
-    category: "توسعه وب",
-    status: "review",
-    views: "—",
-    date: "۱۷ شهریور ۱۴۰۵",
-  },
-  {
-    id: 3,
-    title: "بررسی روندهای جدید طراحی رابط کاربری",
-    author: {
-      name: "سارا اکبری",
-      initials: "سا",
-      color: "bg-[#f4e5d8] text-[#82552f]",
-    },
-    category: "طراحی محصول",
-    status: "published",
-    views: "۸٬۹۲۰",
-    date: "۱۵ شهریور ۱۴۰۵",
-  },
-  {
-    id: 4,
-    title: "TypeScript؛ از تایپ ساده تا معماری مقیاس‌پذیر",
-    author: {
-      name: "کیان نادری",
-      initials: "کن",
-      color: "bg-[#ddefe9] text-[#30665c]",
-    },
-    category: "برنامه‌نویسی",
-    status: "draft",
-    views: "—",
-    date: "۱۴ شهریور ۱۴۰۵",
-  },
-];
+export type DashboardArticle = {
+  id: string;
+  title: string;
+  slug: string;
+  author: { id: string; name: string; initials: string; color: string };
+  category: { id: string; name: string };
+  status: ArticleStatus;
+  views: number;
+  updatedAt: string;
+  publishedAt?: string;
+};
 
-export const chartData = [
-  42, 51, 45, 62, 58, 66, 81, 74, 87, 79, 92, 104, 99, 112, 120, 108, 126, 139,
-  132, 148, 142, 154, 167, 158, 176, 184, 172, 191, 202, 214,
-];
+export type DashboardSearchItem = {
+  id: string;
+  kind: DashboardSearchKind;
+  title: string;
+  description: string;
+  href: string;
+};
 
-export const activities = [
-  {
-    id: 1,
-    name: "مریم",
-    avatar: "م",
-    color: "bg-[#dbe8f2] text-[#254e6e]",
-    action: "مقاله «آینده هوش مصنوعی مولد» را منتشر کرد.",
-    time: "۱۲ دقیقه پیش",
-  },
-  {
-    id: 2,
-    name: "علی",
-    avatar: "ع",
-    color: "bg-[#e8e2f2] text-[#604b78]",
-    action: "مقاله «معماری Server Components» را برای بررسی ارسال کرد.",
-    time: "۴۵ دقیقه پیش",
-  },
-  {
-    id: 3,
-    name: "سارا",
-    avatar: "س",
-    color: "bg-[#f4e5d8] text-[#82552f]",
-    action: "۳ تصویر جدید به کتابخانه رسانه اضافه کرد.",
-    time: "۲ ساعت پیش",
-  },
-  {
-    id: 4,
-    name: "کیان",
-    avatar: "ک",
-    color: "bg-[#ddefe9] text-[#30665c]",
-    action: "پیش‌نویس راهنمای TypeScript را به‌روزرسانی کرد.",
-    time: "دیروز، ۱۸:۲۰",
-  },
-];
+export type DashboardNotification = {
+  id: string;
+  title: string;
+  description: string;
+  type: DashboardNotificationType;
+  read: boolean;
+  createdAt: string;
+  href: string;
+};
+
+export type DashboardActivity = {
+  id: string;
+  name: string;
+  avatar: string;
+  color: string;
+  action: string;
+  time: string;
+  href: string;
+};
+
+export type DashboardStat = {
+  id: "total" | "published" | "draft" | "views";
+  label: string;
+  value: number;
+  detail: string;
+  accent?: boolean;
+};
+
+export type DashboardAnalyticsPoint = { date: string; label: string; views: number };
+export type DashboardAnalytics = { range: AnalyticsRange; rangeLabel: string; total: number; change: number; comparisonLabel: string; points: DashboardAnalyticsPoint[] };
+
+export const dashboardRangeLabels: Record<AnalyticsRange, string> = { "7d": "۷ روز گذشته", "30d": "۳۰ روز گذشته", "90d": "۹۰ روز گذشته" };
+export const defaultDashboardUser: DashboardUser = { id: "local-preview-user", name: "مریم موسوی", email: "editor@technama.local", role: "admin" };
+
+const numberFormatter = new Intl.NumberFormat("fa-IR");
+const compactFormatter = new Intl.NumberFormat("fa-IR", { notation: "compact", maximumFractionDigits: 1 });
+const shortDateFormatter = new Intl.DateTimeFormat("fa-IR-u-ca-persian", { day: "numeric", month: "short", timeZone: "Asia/Tehran" });
+
+export function formatDashboardDate(date: Date) {
+  const parts = new Intl.DateTimeFormat("fa-IR-u-ca-persian", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Tehran" }).formatToParts(date);
+  const part = (type: Intl.DateTimeFormatPartTypes) => parts.find((item) => item.type === type)?.value ?? "";
+  return `${part("weekday")}، ${part("day")} ${part("month")} ${part("year")}`;
+}
+
+export function formatDashboardNumber(value: number, compact = false) {
+  return (compact ? compactFormatter : numberFormatter).format(value);
+}
+
+export function formatRelativeDashboardTime(value: string, now = new Date()) {
+  const target = new Date(value);
+  const diffMinutes = Math.max(0, Math.round((now.getTime() - target.getTime()) / 60_000));
+  if (diffMinutes < 2) return "همین حالا";
+  if (diffMinutes < 60) return `${numberFormatter.format(diffMinutes)} دقیقه پیش`;
+  const diffHours = Math.round(diffMinutes / 60);
+  if (diffHours < 24) return `${numberFormatter.format(diffHours)} ساعت پیش`;
+  const diffDays = Math.round(diffHours / 24);
+  if (diffDays < 7) return `${numberFormatter.format(diffDays)} روز پیش`;
+  return shortDateFormatter.format(target);
+}
+
+export function getDashboardStats(articles: DashboardArticle[]): DashboardStat[] {
+  const published = articles.filter((article) => article.status === "published");
+  const drafts = articles.filter((article) => article.status === "draft");
+  const reviewCount = articles.filter((article) => article.status === "review").length;
+  const totalViews = published.reduce((sum, article) => sum + article.views, 0);
+  const publishedShare = articles.length ? Math.round((published.length / articles.length) * 100) : 0;
+  return [
+    { id: "total", label: "مجموع مقالات", value: articles.length, detail: "کل محتوای ثبت‌شده" },
+    { id: "published", label: "منتشر شده", value: published.length, detail: `${numberFormatter.format(publishedShare)}٪ از کل مقالات`, accent: true },
+    { id: "draft", label: "پیش‌نویس‌ها", value: drafts.length, detail: `${numberFormatter.format(reviewCount)} مورد در انتظار بررسی` },
+    { id: "views", label: "مجموع بازدیدها", value: totalViews, detail: "برای مطالب منتشرشده", accent: true },
+  ];
+}
+
+export function getDashboardSearchItems(articles: DashboardArticle[], authors: Array<{ id: string; name: string; role: DashboardRole }>, categories: Array<{ id: string; name: string }>): DashboardSearchItem[] {
+  return [
+    ...articles.map((article) => ({ id: `article-${article.id}`, kind: "article" as const, title: article.title, description: `${article.author.name} · ${article.category.name}`, href: `/admin/posts/${article.id}/edit` })),
+    ...authors.map((author) => ({ id: `author-${author.id}`, kind: "author" as const, title: author.name, description: author.role === "admin" ? "مدیر" : author.role === "editor" ? "ویراستار" : "نویسنده", href: `/admin/authors/${author.id}/edit` })),
+    ...categories.map((category) => ({ id: `category-${category.id}`, kind: "category" as const, title: category.name, description: "دسته‌بندی محتوا", href: `/admin/categories/${category.id}/edit` })),
+  ];
+}
+
+export function getDashboardAnalytics(range: AnalyticsRange, nowIso: string): DashboardAnalytics {
+  const now = new Date(nowIso);
+  const config = range === "7d" ? { count: 7, step: 1, base: 610, change: 8.7 } : range === "30d" ? { count: 30, step: 1, base: 720, change: 14.2 } : { count: 15, step: 6, base: 4_380, change: 19.6 };
+  const points = Array.from({ length: config.count }, (_, index) => {
+    const daysAgo = (config.count - 1 - index) * config.step;
+    const date = new Date(now);
+    date.setUTCDate(date.getUTCDate() - daysAgo);
+    const seasonal = Math.sin((index + 1) * 1.31) * config.base * 0.12;
+    const weekly = index % 6 === 4 ? config.base * 0.2 : index % 7 === 0 ? -config.base * 0.09 : 0;
+    const growth = index * config.base * 0.018;
+    const deterministicNoise = ((index * 73 + config.count * 11) % 97) - 48;
+    const views = Math.max(120, Math.round(config.base + seasonal + weekly + growth + deterministicNoise));
+    return { date: date.toISOString(), label: shortDateFormatter.format(date), views };
+  });
+  return { range, rangeLabel: dashboardRangeLabels[range], total: points.reduce((sum, point) => sum + point.views, 0), change: config.change, comparisonLabel: "نسبت به دوره قبل", points };
+}
+
+export function normalizeArticleStatus(status: string): ArticleStatus {
+  if (status === "published" || status === "review") return status;
+  return "draft";
+}

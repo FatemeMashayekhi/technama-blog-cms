@@ -109,9 +109,13 @@ button, a { -webkit-tap-highlight-color: transparent; }
   contain-intrinsic-size: auto 720px;
 }
 
-:focus-visible {
-  outline: 3px solid rgba(15, 123, 112, 0.24);
-  outline-offset: 2px;
+:focus, :focus-visible { outline: none !important; }
+input:focus, input:focus-visible,
+select:focus, select:focus-visible,
+textarea:focus, textarea:focus-visible { outline: none !important; box-shadow: none !important; }
+
+.dashboard-shell :is(a, button):focus-visible {
+  box-shadow: 0 0 0 3px rgba(15, 123, 112, 0.18);
 }
 
 ::selection { background: #cfe8e4; color: #102f2c; }

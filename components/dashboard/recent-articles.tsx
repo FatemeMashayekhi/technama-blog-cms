@@ -1,130 +1,38 @@
-import { ArrowLeft, FileText, MoreHorizontal } from "lucide-react";
-import { articles } from "@/lib/dashboard-data";
+"use client";
+
+import { ArrowLeft, ExternalLink, FilePenLine, FileText, MoreHorizontal, Plus } from "lucide-react";
+import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
+import type { DashboardArticle } from "@/lib/dashboard-data";
 import { ArticleStatusBadge } from "./status-badge";
 
-export function RecentArticles() {
+const dateFormatter = new Intl.DateTimeFormat("fa-IR-u-ca-persian", { day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Tehran" });
+
+export function RecentArticles({ articles }: { articles: DashboardArticle[] }) {
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const sectionRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const closeOutside = (event: PointerEvent) => { if (!sectionRef.current?.contains(event.target as Node)) setOpenMenuId(null); };
+    const closeEscape = (event: KeyboardEvent) => { if (event.key === "Escape") setOpenMenuId(null); };
+    document.addEventListener("pointerdown", closeOutside);
+    document.addEventListener("keydown", closeEscape);
+    return () => { document.removeEventListener("pointerdown", closeOutside); document.removeEventListener("keydown", closeEscape); };
+  }, []);
+
   return (
-    <section className="overflow-hidden rounded-(--radius) border border-(--border) bg-white xl:col-span-3">
-      <div className="flex items-center justify-between border-b border-(--border) px-4 py-4 sm:px-6">
-        <div>
-          <h2 className="text-sm font-bold">مقالات اخیر</h2>
-          <p className="mt-1 text-[13px] text-(--muted)">
-            آخرین تغییرات محتوای تحریریه
-          </p>
-        </div>
-        <button
-          type="button"
-          title="صفحه مقالات در مرحله بعد ساخته می‌شود"
-          className="flex items-center gap-1.5 text-[14px] font-bold text-(--accent) hover:text-(--brand-teal)"
-        >
-          مشاهده همه <ArrowLeft size={14} />
-        </button>
-      </div>
+    <section ref={sectionRef} className="overflow-visible rounded-(--radius) border border-(--border) bg-white xl:col-span-3">
+      <div className="flex items-center justify-between border-b border-(--border) px-4 py-4 sm:px-6"><div><h2 className="text-sm font-bold">مقالات اخیر</h2><p className="mt-1 text-[13px] text-(--muted)">آخرین تغییرات محتوای تحریریه</p></div><Link href="/admin/posts" className="flex min-h-10 items-center gap-1.5 rounded-lg px-2 text-[13px] font-bold text-(--accent) hover:bg-(--accent-soft) hover:text-(--brand-teal)">مشاهده همه <ArrowLeft size={14} /></Link></div>
       {articles.length === 0 ? (
-        <div className="grid min-h-64 place-items-center p-8 text-center">
-          <div>
-            <span className="mx-auto grid size-11 place-items-center rounded-(--radius) bg-(--surface-muted) text-(--text-muted)">
-              <FileText size={20} />
-            </span>
-            <h3 className="mt-3 text-xs font-bold text-(--text-strong)">
-              هنوز مقاله‌ای وجود ندارد
-            </h3>
-            <p className="mt-1.5 text-[13px] text-(--text-muted)">
-              اولین مقاله تحریریه را ایجاد کنید.
-            </p>
-          </div>
-        </div>
-      ) : (
-        <>
-          <div className="hidden overflow-x-auto md:block">
-            <table className="w-full min-w-205 text-right">
-              <thead>
-                <tr className="bg-(--surface-subtle) text-[13px] font-bold text-(--text-muted)">
-                  <th className="px-6 py-3.5">مقاله</th>
-                  <th className="px-4 py-3.5">نویسنده</th>
-                  <th className="px-4 py-3.5">دسته‌بندی</th>
-                  <th className="px-4 py-3.5">وضعیت</th>
-                  <th className="px-4 py-3.5">بازدید</th>
-                  <th className="px-4 py-3.5">تاریخ</th>
-                  <th className="w-12 px-3 py-3.5">
-                    <span className="sr-only">عملیات</span>
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#edf0f2]">
-                {articles.map((article) => (
-                  <tr key={article.id} className="group hover:bg-(--surface-subtle)">
-                    <td className="max-w-75 px-6 py-4">
-                      <span className="block truncate text-[12px] font-bold text-(--text-strong)">
-                        {article.title}
-                      </span>
-                    </td>
-                    <td className="px-4 py-4">
-                      <span className="flex items-center gap-2 whitespace-nowrap text-[14px] text-(--text-secondary)">
-                        <span
-                          className={`grid size-7 place-items-center rounded-full text-[12px] font-bold ${article.author.color}`}
-                        >
-                          {article.author.initials}
-                        </span>
-                        {article.author.name}
-                      </span>
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-4 text-[14px] text-(--text-secondary)">
-                      {article.category}
-                    </td>
-                    <td className="px-4 py-4">
-                      <ArticleStatusBadge status={article.status} />
-                    </td>
-                    <td className="px-4 py-4 text-[14px] font-bold text-(--text-secondary)">
-                      {article.views}
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-4 text-[13px] text-(--text-muted)">
-                      {article.date}
-                    </td>
-                    <td className="px-3 py-4">
-                      <button
-                        aria-label={`عملیات ${article.title}`}
-                        className="grid size-10 place-items-center rounded-lg text-(--text-muted) opacity-60 hover:bg-(--surface-muted) group-hover:opacity-100"
-                      >
-                        <MoreHorizontal size={18} />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <div className="divide-y divide-[#edf0f2] md:hidden">
-            {articles.map((article) => (
-              <article key={article.id} className="p-4 hover:bg-(--surface-subtle)">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <h3 className="text-[12px] font-bold leading-6">
-                      {article.title}
-                    </h3>
-                    <div className="mt-2 flex flex-wrap items-center gap-2">
-                      <ArticleStatusBadge status={article.status} />
-                      <span className="text-[13px] text-(--text-muted)">
-                        {article.category}
-                      </span>
-                    </div>
-                  </div>
-                  <button
-                    aria-label={`عملیات ${article.title}`}
-                    className="grid size-10 shrink-0 place-items-center rounded-lg text-(--text-muted)"
-                  >
-                    <MoreHorizontal size={18} />
-                  </button>
-                </div>
-                <div className="mt-3 flex items-center justify-between text-[13px] text-(--text-muted)">
-                  <span>{article.author.name}</span>
-                  <span>{article.date}</span>
-                </div>
-              </article>
-            ))}
-          </div>
-        </>
-      )}
+        <div className="grid min-h-64 place-items-center p-8 text-center"><div><span className="mx-auto grid size-11 place-items-center rounded-(--radius) bg-(--surface-muted) text-(--text-muted)"><FileText size={20} /></span><h3 className="mt-3 text-xs font-bold text-(--text-strong)">هنوز مقاله‌ای وجود ندارد</h3><p className="mt-1.5 text-[13px] text-(--text-muted)">اولین مقاله تحریریه را ایجاد کنید.</p><Link href="/admin/posts/new" className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-(--radius-sm) bg-(--brand-navy) px-4 text-[12px] font-bold text-white"><Plus size={16} /> ایجاد مقاله</Link></div></div>
+      ) : <>
+        <div className="hidden overflow-x-auto md:block"><table className="w-full min-w-205 text-right"><thead><tr className="bg-(--surface-subtle) text-[13px] font-bold text-(--text-muted)"><th className="px-6 py-3.5">مقاله</th><th className="px-4 py-3.5">نویسنده</th><th className="px-4 py-3.5">دسته‌بندی</th><th className="px-4 py-3.5">وضعیت</th><th className="px-4 py-3.5">بازدید</th><th className="px-4 py-3.5">تاریخ</th><th className="w-12 px-3 py-3.5"><span className="sr-only">عملیات</span></th></tr></thead><tbody className="divide-y divide-[#edf0f2]">{articles.map((article) => <tr key={article.id} className="group hover:bg-(--surface-subtle)"><td className="max-w-75 px-6 py-4"><Link href={`/admin/posts/${article.id}/edit`} className="block truncate text-[12px] font-bold text-(--text-strong) hover:text-(--brand-teal)">{article.title}</Link></td><td className="px-4 py-4">{article.author.id ? <Link href={`/admin/authors/${article.author.id}/edit`} className="flex items-center gap-2 whitespace-nowrap text-[13px] text-(--text-secondary) hover:text-(--brand-teal)"><span className={`grid size-7 place-items-center rounded-full text-[11px] font-bold ${article.author.color}`}>{article.author.initials}</span>{article.author.name}</Link> : <span className="text-[13px] text-(--text-secondary)">{article.author.name}</span>}</td><td className="whitespace-nowrap px-4 py-4 text-[13px]">{article.category.id ? <Link href={`/admin/categories/${article.category.id}/edit`} className="text-(--text-secondary) hover:text-(--brand-teal)">{article.category.name}</Link> : <span className="text-(--text-muted)">{article.category.name}</span>}</td><td className="px-4 py-4"><ArticleStatusBadge status={article.status} /></td><td className="px-4 py-4 text-[13px] font-bold text-(--text-secondary)">{article.views.toLocaleString("fa-IR")}</td><td className="whitespace-nowrap px-4 py-4 text-[12px] text-(--text-muted)">{dateFormatter.format(new Date(article.updatedAt))}</td><td className="relative px-3 py-4"><ArticleMenu article={article} open={openMenuId === article.id} onToggle={() => setOpenMenuId((current) => current === article.id ? null : article.id)} onClose={() => setOpenMenuId(null)} /></td></tr>)}</tbody></table></div>
+        <div className="divide-y divide-[#edf0f2] md:hidden">{articles.map((article) => <article key={article.id} className="relative p-4 hover:bg-(--surface-subtle)"><div className="flex items-start justify-between gap-3"><div className="min-w-0"><Link href={`/admin/posts/${article.id}/edit`} className="text-[12px] font-bold leading-6 text-(--text-strong) hover:text-(--brand-teal)">{article.title}</Link><div className="mt-2 flex flex-wrap items-center gap-2"><ArticleStatusBadge status={article.status} /><span className="text-[12px] text-(--text-muted)">{article.category.name}</span></div></div><ArticleMenu article={article} open={openMenuId === article.id} onToggle={() => setOpenMenuId((current) => current === article.id ? null : article.id)} onClose={() => setOpenMenuId(null)} /></div><div className="mt-3 flex items-center justify-between text-[11px] text-(--text-muted)"><span>{article.author.name}</span><span>{dateFormatter.format(new Date(article.updatedAt))}</span></div></article>)}</div>
+      </>}
     </section>
   );
+}
+
+function ArticleMenu({ article, open, onToggle, onClose }: { article: DashboardArticle; open: boolean; onToggle: () => void; onClose: () => void }) {
+  return <div className="relative"><button type="button" aria-label={`عملیات ${article.title}`} aria-haspopup="menu" aria-expanded={open} onClick={onToggle} className="grid size-10 shrink-0 place-items-center rounded-lg text-(--text-muted) opacity-70 hover:bg-(--surface-muted) hover:text-(--text-strong) group-hover:opacity-100"><MoreHorizontal size={18} /></button>{open && <div role="menu" className="absolute left-0 top-[calc(100%+6px)] z-20 w-45 rounded-(--radius-sm) border border-(--border) bg-white p-1.5 shadow-[0_16px_45px_rgba(16,35,49,.16)]"><Link role="menuitem" href={`/admin/posts/${article.id}/edit`} onClick={onClose} className="flex min-h-10 items-center gap-2 rounded-lg px-3 text-[12px] font-bold text-(--text-secondary) hover:bg-(--surface-subtle)"><FilePenLine size={15} /> ویرایش مقاله</Link>{article.status === "published" ? <Link role="menuitem" href={`/articles/${article.slug}`} target="_blank" rel="noreferrer" onClick={onClose} className="flex min-h-10 items-center gap-2 rounded-lg px-3 text-[12px] font-bold text-(--text-secondary) hover:bg-(--surface-subtle)"><ExternalLink size={15} /> مشاهده عمومی</Link> : <span className="flex min-h-10 items-center gap-2 rounded-lg px-3 text-[11px] text-(--text-muted)"><FileText size={15} /> نسخه عمومی پس از انتشار</span>}</div>}</div>;
 }

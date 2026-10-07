@@ -4,12 +4,14 @@ export function StatCard({
   label,
   value,
   trend,
+  detail,
   icon: Icon,
   accent = false,
 }: {
   label: string;
   value: string;
-  trend: string;
+  trend?: string;
+  detail?: string;
   icon: LucideIcon;
   accent?: boolean;
 }) {
@@ -28,9 +30,8 @@ export function StatCard({
           <Icon size={19} strokeWidth={1.8} />
         </span>
       </div>
-      <p className="mt-3 text-[13px] text-(--text-muted)">
-        <span className="ml-1 font-bold text-(--brand-teal)">↑ {trend}</span> نسبت به
-        ماه گذشته
+      <p className="mt-3 min-h-5 text-[13px] text-(--text-muted)">
+        {detail ?? <><span className="ml-1 font-bold text-(--brand-teal)">↑ {trend}</span> نسبت به ماه گذشته</>}
       </p>
     </article>
   );
