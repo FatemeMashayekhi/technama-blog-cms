@@ -2,6 +2,7 @@
 node_modules/
 out/
 *.log
+load-results/
 .env*
 !.env.example
 .vercel/

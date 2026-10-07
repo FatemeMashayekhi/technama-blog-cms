@@ -4,7 +4,12 @@ import { NextResponse, type NextRequest } from "next/server";
 import { getSupabaseEnvironment, isSupabaseConfigured } from "@/lib/env";
 
 export async function updateSupabaseSession(request: NextRequest) {
-  if (!isSupabaseConfigured) return NextResponse.next({ request });
+  if (!isSupabaseConfigured) {
+    if (process.env.NODE_ENV === "production" && request.nextUrl.pathname.startsWith("/admin")) {
+      return NextResponse.json({ ok: false, error: "سامانه احراز هویت پیکربندی نشده است." }, { status: 503, headers: { "Cache-Control": "private, no-store" } });
+    }
+    return NextResponse.next({ request });
+  }
   const { url, publishableKey } = getSupabaseEnvironment();
   let response = NextResponse.next({ request });
   const supabase = createServerClient(url, publishableKey, {

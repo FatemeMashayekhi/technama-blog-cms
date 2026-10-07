@@ -6,6 +6,8 @@ import { PublicFooter } from "@/components/public/public-footer";
 import { PublicHeader } from "@/components/public/public-header";
 import { getPublicArchiveData } from "@/lib/public-service";
 
+export const revalidate = 300;
+
 export const metadata: Metadata = { title: "همه مقالات", description: "آرشیو مقاله‌های تخصصی تک‌نما درباره فناوری، محصول و نوآوری.", alternates: { canonical: "/articles" } };
 
 export default async function ArticlesPage() {

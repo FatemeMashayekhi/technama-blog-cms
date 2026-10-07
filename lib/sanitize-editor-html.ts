@@ -10,6 +10,7 @@ const removableTags = new Set([
 function safeUrl(value: string, image = false) {
   const url = value.trim();
   if (!url) return false;
+  if (url.startsWith("//") || url.startsWith("\\")) return false;
   if (url.startsWith("/") || (!image && url.startsWith("#"))) return true;
   try {
     const parsed = new URL(url);
@@ -51,7 +52,10 @@ export function sanitizeEditorHtml(html: string) {
         element.rel = "noopener noreferrer nofollow";
       }
     }
-    if (element instanceof HTMLImageElement && !safeUrl(element.getAttribute("src") || "", true)) element.remove();
+    if (element instanceof HTMLImageElement) {
+      element.removeAttribute("srcset");
+      if (!safeUrl(element.getAttribute("src") || "", true)) element.remove();
+    }
   }
 
   return document.body.innerHTML;

@@ -6,6 +6,8 @@ import { PublicFooter } from "@/components/public/public-footer";
 import { PublicHeader } from "@/components/public/public-header";
 import { getPublicAuthors } from "@/lib/public-author-service";
 
+export const revalidate = 300;
+
 export const metadata: Metadata = { title: "نویسندگان", description: "با نویسندگان و متخصصان تحریریه تک‌نما آشنا شوید.", alternates: { canonical: "/authors" } };
 
 export default async function AuthorsPage() {

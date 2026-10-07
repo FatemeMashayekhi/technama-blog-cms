@@ -1,15 +1,18 @@
 import { z } from "zod";
+import { normalizeWebUrl } from "@/lib/url-security";
 
 const slug = z.string().trim().min(2).max(160).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "نامک باید با حروف انگلیسی، عدد و خط تیره نوشته شود.");
+const safeWebUrl = z.string().trim().max(2_000).refine((value) => !value || normalizeWebUrl(value, { allowRelative: true }) !== null, "آدرس اینترنتی معتبر نیست.");
 const optionalUuid = z.preprocess((value) => value === "" ? null : value, z.string().uuid().nullable().optional());
+export const uuidSchema = z.string().uuid();
 
 const articleFields = {
   title: z.string().trim().min(1).max(220), slug,
-  excerpt: z.string().trim().max(500), content: z.string().max(500_000),
+  excerpt: z.string().trim().max(500), content: z.string().max(200_000),
   categoryId: z.string().max(100), authorId: z.string().min(1).optional(), tags: z.array(z.string().min(1)).max(20).default([]),
-  featuredImage: z.string().max(2_000).optional().nullable(), status: z.enum(["draft", "review", "published", "scheduled"]),
+  featuredImage: safeWebUrl.optional().nullable(), status: z.enum(["draft", "review", "published", "scheduled"]),
   publishMode: z.enum(["now", "scheduled"]).default("now"), publishAt: z.string().max(40).optional().nullable(),
-  seo: z.object({ title: z.string().max(70).default(""), description: z.string().max(180).default(""), canonicalUrl: z.string().max(2_000).default(""), ogImage: z.string().max(2_000).default("") }),
+  seo: z.object({ title: z.string().max(70).default(""), description: z.string().max(180).default(""), canonicalUrl: safeWebUrl.default(""), ogImage: safeWebUrl.default("") }),
 };
 export const articleInputSchema = z.object(articleFields).superRefine((value, context) => {
   if (value.status === "draft") return;
@@ -23,9 +26,15 @@ export const articlePatchSchema = z.object(articleFields).partial();
 export const publicCommentSchema = z.object({ articleId: z.string().uuid(), parentId: optionalUuid, name: z.string().trim().min(2).max(80), email: z.string().email().max(254), content: z.string().trim().min(5).max(5_000), website: z.string().max(0).optional() });
 export const commentModerationSchema = z.object({ status: z.enum(["pending", "approved", "rejected", "spam"]) });
 export const mediaPatchSchema = z.object({ name: z.string().trim().min(1).max(180).optional(), altText: z.string().trim().max(300).optional() }).refine((value) => value.name !== undefined || value.altText !== undefined);
-export const categoryInputSchema = z.object({ name: z.string().trim().min(2).max(100), slug, description: z.string().trim().min(20).max(1_000), icon: z.string().max(60).default("Folder"), color: z.string().regex(/^#[0-9a-fA-F]{6}$/), parentId: optionalUuid, coverImage: z.string().max(2_000).optional().nullable(), seo: z.object({ title: z.string().max(70), description: z.string().max(180), canonicalUrl: z.string().max(2_000) }) });
+export const categoryInputSchema = z.object({ name: z.string().trim().min(2).max(100), slug, description: z.string().trim().min(20).max(1_000), icon: z.string().max(60).default("Folder"), color: z.string().regex(/^#[0-9a-fA-F]{6}$/), parentId: optionalUuid, coverImage: safeWebUrl.optional().nullable(), seo: z.object({ title: z.string().max(70), description: z.string().max(180), canonicalUrl: safeWebUrl }) });
 export const tagInputSchema = z.object({ name: z.string().trim().min(1).max(60), slug });
 export const newsletterSchema = z.object({ email: z.string().email().max(254) });
 export const inviteAuthorSchema = z.object({ email: z.string().email().max(254), displayName: z.string().trim().min(2).max(100), role: z.enum(["admin", "editor", "author"]).default("author") });
-export const profilePatchSchema = z.object({ displayName: z.string().trim().min(2).max(100).optional(), username: z.string().trim().regex(/^[a-zA-Z0-9._-]{3,40}$/).optional(), email: z.string().email().max(254).optional(), avatarUrl: z.string().max(2_000).optional().nullable(), bio: z.string().trim().max(500).optional(), role: z.enum(["admin", "editor", "author"]).optional(), isActive: z.boolean().optional() }).refine((value) => Object.keys(value).length > 0);
-export const settingsInputSchema = z.object({ key: z.string().trim().min(2).max(80).regex(/^[a-z0-9._-]+$/), value: z.unknown() });
+export const profilePatchSchema = z.object({ displayName: z.string().trim().min(2).max(100).optional(), username: z.string().trim().regex(/^[a-zA-Z0-9._-]{3,40}$/).optional(), email: z.string().email().max(254).optional(), avatarUrl: safeWebUrl.optional().nullable(), bio: z.string().trim().max(500).optional(), role: z.enum(["admin", "editor", "author"]).optional(), isActive: z.boolean().optional() }).refine((value) => Object.keys(value).length > 0);
+export const settingsInputSchema = z.object({ key: z.literal("cms"), value: z.record(z.string(), z.unknown()).refine((value) => JSON.stringify(value).length <= 50_000, "حجم تنظیمات بیشتر از حد مجاز است.") });
+
+export const articleListQuerySchema = z.object({
+  scope: z.enum(["admin"]).optional(),
+  slug: slug.optional(),
+  limit: z.coerce.number().int().min(1).max(100).default(50),
+});

@@ -12,6 +12,8 @@ import { TrendingTopics } from "@/components/public/trending-topics";
 import { getPublicHomeData } from "@/lib/public-service";
 import { mockTags } from "@/lib/taxonomy-data";
 
+export const revalidate = 300;
+
 export const metadata: Metadata = {
   title: "مجله فناوری؛ تحلیل برای ساختن آینده",
   description: "تازه‌ترین تحلیل‌ها و مقاله‌های تخصصی درباره هوش مصنوعی، برنامه‌نویسی، امنیت، طراحی محصول و اکوسیستم استارتاپی را در تک‌نما بخوانید.",

@@ -10,7 +10,8 @@ const routes = [
 const failures = [];
 for (const route of routes) {
   const response = await fetch(`${baseUrl}${route}`, { redirect: "manual" });
-  if (response.status < 200 || response.status >= 400) failures.push(`${route}: ${response.status}`);
+  const expectedFailClosed = process.env.SMOKE_EXPECT_AUTH_UNCONFIGURED === "true" && route.startsWith("/admin/") && response.status === 503;
+  if (!expectedFailClosed && (response.status < 200 || response.status >= 400)) failures.push(`${route}: ${response.status}`);
   else console.log(`OK ${response.status} ${route}`);
 }
 

@@ -95,11 +95,18 @@ The application uses Supabase when it is available and falls back to the version
 
 1. Create a new Supabase project.
 2. Copy `.env.example` to `.env.local` and fill in the values from the Supabase project settings.
-3. Run `supabase/migrations/202609120001_initial_cms.sql` using the Supabase SQL Editor or Supabase CLI.
-4. Start the application and create the first account at `/login`.
-5. Run `npm run seed:all` once to create the editorial author profiles and upsert the curated public articles, categories, and article-tag relations. The command is idempotent and requires `SUPABASE_SERVICE_ROLE_KEY`.
-6. The first account receives the `admin` role; subsequent accounts receive the `author` role.
-7. After creating the first administrator, set `NEXT_PUBLIC_ALLOW_SIGNUP=false` in `.env.local`. New team members can then be invited from the dashboard.
+3. Apply both migrations in timestamp order using the Supabase SQL Editor or Supabase CLI:
+   - `supabase/migrations/202609120001_initial_cms.sql`
+   - `supabase/migrations/202610070001_security_hardening.sql`
+4. Temporarily set `NEXT_PUBLIC_ALLOW_SIGNUP=true`, start the application, and create the trusted bootstrap account at `/login`.
+5. Verify that account's email, copy its UUID from Supabase Authentication, and promote it explicitly in the SQL Editor:
+
+   ```sql
+   update public.profiles set role = 'admin' where id = '<verified-user-uuid>';
+   ```
+
+6. Immediately restore `NEXT_PUBLIC_ALLOW_SIGNUP=false`. New team members should then be invited by an administrator from the dashboard.
+7. Run `npm run seed:all` once to create the editorial author profiles and upsert the curated public articles, categories, and article-tag relations. The command is idempotent and requires `SUPABASE_SERVICE_ROLE_KEY`.
 
 On Windows PowerShell:
 
@@ -109,7 +116,7 @@ npm install
 npm run dev
 ```
 
-`SUPABASE_SERVICE_ROLE_KEY` is server-only and is required for author invitations and administrative user management. Never expose it through a `NEXT_PUBLIC_` variable or commit it to Git. `.env.local` is ignored, while `.env.example` is intentionally tracked as a safe template.
+`SUPABASE_SERVICE_ROLE_KEY` is server-only and is required for invitations, validated public writes, secure media handling, and distributed rate limiting. `RATE_LIMIT_SECRET` must be a random value of at least 32 characters in production. Never expose either value through a `NEXT_PUBLIC_` variable or commit it to Git. `.env.local` is ignored, while `.env.example` is intentionally tracked as a safe template.
 
 ### Security Model
 
@@ -119,8 +126,13 @@ npm run dev
 - PostgreSQL Row Level Security is the final authorization boundary.
 - Authors can modify only their own articles and media; editors and administrators receive broader permissions.
 - Commenter email addresses are available only to authorized editorial users and are never returned by the public API.
-- Uploaded files use user-specific paths, an allowlist of MIME types, and a 6 MB size limit.
-- Database-backed rate limiting protects public comment and newsletter endpoints.
+- Mutating APIs validate runtime schemas, same-origin browser requests, body-size limits, authentication, and role permissions on the server.
+- Rich article HTML is sanitized on the server before storage; client-side sanitization remains an additional preview safeguard.
+- Uploaded images are limited to JPEG, PNG, or WebP input, capped at 4 MiB/40 megapixels, checked by file signature, stripped of metadata, and re-encoded to WebP before storage.
+- Direct anonymous comment/newsletter writes and direct browser storage uploads are revoked; these operations pass through validated server routes.
+- Database-backed distributed rate limiting covers authentication, public forms, media uploads, and CMS mutations.
+- Production responses include a CSP, HSTS, MIME-sniffing protection, frame protection, a restrictive permissions policy, and private no-store caching for APIs.
+- Public articles, authors, and homepage data use ISR; session middleware runs only for `/admin` and `/login`.
 
 ## Available Scripts
 
@@ -145,9 +157,14 @@ npm start
 
 # Test the main HTTP routes after starting the server
 npm run test:smoke
+
+# Run the reproducible k6 traffic scenario (k6 must be installed separately)
+npm run load:k6
 ```
 
 Set `SMOKE_BASE_URL` to run the smoke test against a different address.
+
+The k6 script refuses non-local targets by default. Only point it at a dedicated preview/staging environment and set `ALLOW_REMOTE_LOAD_TEST=true` after confirming that the database and accounts contain synthetic test data. Important options include `LOAD_BASE_URL`, `LOAD_VUS`, `LOAD_DURATION`, `LOAD_ADMIN_COOKIE`, and `LOAD_RESULT_FILE`.
 
 ## Project Structure
 
@@ -177,6 +194,7 @@ lib/                       # Services, validation, auth, data access, and demo d
 public/                    # Fonts, illustrations, and static assets
 supabase/migrations/       # PostgreSQL schema, RLS policies, and storage setup
 scripts/smoke-test.mjs     # HTTP route smoke test
+scripts/load/              # Reproducible k6 load scenario
 tests/                     # Automated architecture and UI quality tests
 ```
 
@@ -205,7 +223,7 @@ This project was not hosted on GitHub from the beginning of its development. As 
 
 - Add component and browser-based end-to-end tests
 - Connect an email delivery provider to the newsletter subscriber list
-- Add distributed rate limiting and CAPTCHA to public forms
+- Add CAPTCHA only if measured abuse exceeds the current honeypot and distributed-rate-limit controls
 - Implement event collection for live analytics
 - Add secure draft previews and server-side scheduled publishing
 - Deploy with error monitoring and Core Web Vitals tracking

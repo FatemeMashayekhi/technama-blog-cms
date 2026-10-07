@@ -7,6 +7,7 @@ import { isSupabaseConfigured } from "@/lib/env";
 export const metadata: Metadata = { title: { default: "اتاق خبر", template: "%s | اتاق خبر تک‌نما" }, robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";
 export default async function AdminLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  if (!isSupabaseConfigured && process.env.NODE_ENV === "production") redirect("/login?error=configuration");
   if (isSupabaseConfigured) {
     await requireUser();
     const profile = await getCurrentProfile();

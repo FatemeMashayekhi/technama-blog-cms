@@ -1,15 +1,23 @@
 import { NextResponse } from "next/server";
 import { ZodError } from "zod";
+import { RequestSecurityError } from "@/lib/request-security";
+
+const privateHeaders = {
+  "Cache-Control": "private, no-store, max-age=0",
+  Pragma: "no-cache",
+  "X-Content-Type-Options": "nosniff",
+};
 
 export function apiError(message: string, status = 400, details?: unknown) {
-  return NextResponse.json({ ok: false, error: message, ...(details ? { details } : {}) }, { status });
+  return NextResponse.json({ ok: false, error: message, ...(details ? { details } : {}) }, { status, headers: privateHeaders });
 }
 
 export function apiSuccess<T>(data: T, status = 200) {
-  return NextResponse.json({ ok: true, data }, { status });
+  return NextResponse.json({ ok: true, data }, { status, headers: privateHeaders });
 }
 
 export function handleApiError(error: unknown) {
+  if (error instanceof RequestSecurityError) return apiError(error.message, error.status);
   if (error instanceof ZodError) return apiError("داده‌های ارسال‌شده معتبر نیستند.", 422, error.flatten());
   if (typeof error === "object" && error && "code" in error) {
     const code = String((error as { code?: unknown }).code ?? "");

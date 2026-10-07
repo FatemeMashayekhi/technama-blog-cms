@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { z } from "zod";
+import { sanitizeStoredArticleHtml } from "@/lib/sanitize-editor-html.server";
 import type { articleInputSchema } from "@/lib/validation";
 
 type ArticleInput = z.infer<typeof articleInputSchema>;
@@ -44,9 +45,10 @@ export async function createArticle(supabase: SupabaseClient, input: ArticleInpu
   const authorId = uuidPattern.test(input.authorId ?? "") && canPublish ? input.authorId! : currentUserId;
   const requestedStatus = input.publishMode === "scheduled" ? "scheduled" : input.status;
   const status = !canPublish && ["published", "scheduled"].includes(requestedStatus) ? "review" : requestedStatus;
-  const plainText = input.content.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+  const content = sanitizeStoredArticleHtml(input.content);
+  const plainText = content.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
   const row = {
-    title: input.title, slug: input.slug, excerpt: input.excerpt, content: input.content,
+    title: input.title, slug: input.slug, excerpt: input.excerpt, content,
     category_id: categoryId, author_id: authorId, cover_url: input.featuredImage || null, status,
     reading_time: Math.max(1, Math.ceil((plainText ? plainText.split(" ").length : 0) / 220)),
     published_at: status === "published" ? new Date().toISOString() : null,
@@ -66,8 +68,9 @@ export async function updateArticle(supabase: SupabaseClient, id: string, input:
   if (input.slug !== undefined) patch.slug = input.slug;
   if (input.excerpt !== undefined) patch.excerpt = input.excerpt;
   if (input.content !== undefined) {
-    patch.content = input.content;
-    const plainText = input.content.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+    const content = sanitizeStoredArticleHtml(input.content);
+    patch.content = content;
+    const plainText = content.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
     patch.reading_time = Math.max(1, Math.ceil((plainText ? plainText.split(" ").length : 0) / 220));
   }
   if (input.categoryId !== undefined) patch.category_id = input.categoryId ? await resolveCategoryId(supabase, input.categoryId) : null;
