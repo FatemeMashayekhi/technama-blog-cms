@@ -109,6 +109,16 @@ button, a { -webkit-tap-highlight-color: transparent; }
   contain-intrinsic-size: auto 720px;
 }
 
+@keyframes skeletonPulse {
+  0%, 100% { opacity: .62; }
+  50% { opacity: 1; }
+}
+
+.skeleton-surface {
+  background-color: var(--surface-muted);
+  animation: skeletonPulse 1.8s ease-in-out infinite;
+}
+
 :focus, :focus-visible { outline: none !important; }
 input:focus, input:focus-visible,
 select:focus, select:focus-visible,
@@ -131,6 +141,7 @@ textarea:focus, textarea:focus-visible { outline: none !important; box-shadow: n
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+  .skeleton-surface { animation: none !important; opacity: .82; }
 }
 
 @media (prefers-contrast: more) {
