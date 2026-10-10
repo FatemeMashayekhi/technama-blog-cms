@@ -1,5 +1,6 @@
 import { mockArticles } from "@/lib/posts-data";
 import { isSupabaseConfigured } from "@/lib/env";
+import { isFutureTehranDateTime, tehranDateTimeToIso } from "@/lib/article-scheduling";
 
 export type EditorArticleStatus = "draft" | "review" | "published" | "scheduled";
 
@@ -79,9 +80,12 @@ export async function saveMockArticle(data: ArticleFormData) {
 
 export async function saveArticleToCms(data: ArticleFormData, articleId?: string) {
   if (!isSupabaseConfigured) return { ...(await saveMockArticle(data)), id: articleId };
+  const scheduledAt = data.publishAt ? tehranDateTimeToIso(data.publishAt) : null;
+  if (data.status === "scheduled" && (!scheduledAt || Date.parse(scheduledAt) <= Date.now())) throw new Error("زمان انتشار باید یک تاریخ معتبر در آینده باشد.");
+  const payload = { ...data, publishAt: scheduledAt };
   const response = await fetch(articleId ? `/api/articles/${articleId}` : "/api/articles", {
     method: articleId ? "PATCH" : "POST",
-    headers: { "Content-Type": "application/json" }, body: JSON.stringify(data),
+    headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload),
   });
   const result = await response.json() as { ok: boolean; data?: { id: string }; error?: string };
   if (!response.ok || !result.ok || !result.data) throw new Error(result.error || "ذخیره مقاله انجام نشد.");
@@ -91,11 +95,16 @@ export async function saveArticleToCms(data: ArticleFormData, articleId?: string
 export function validateArticle(data: ArticleFormData): ArticleFormErrors {
   const errors: ArticleFormErrors = {};
   if (!data.title.trim()) errors.title = "عنوان مقاله الزامی است.";
+  else if (data.title.trim().length > 220) errors.title = "عنوان مقاله نمی‌تواند بیشتر از ۲۲۰ کاراکتر باشد.";
   if (!data.slug.trim()) errors.slug = "آدرس مقاله الزامی است.";
+  else if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(data.slug.trim())) errors.slug = "نامک باید با حروف انگلیسی، عدد و خط تیره نوشته شود.";
   if (data.excerpt.trim().length < 30) errors.excerpt = "خلاصه مقاله باید حداقل ۳۰ کاراکتر باشد.";
+  else if (data.excerpt.length > 500) errors.excerpt = "خلاصه مقاله نمی‌تواند بیشتر از ۵۰۰ کاراکتر باشد.";
   if (!data.content.replace(/<[^>]*>/g, "").trim()) errors.content = "محتوای مقاله نمی‌تواند خالی باشد.";
+  else if (data.content.length > 200_000) errors.content = "حجم محتوای مقاله بیشتر از حد مجاز است.";
   if (!data.categoryId) errors.categoryId = "انتخاب دسته‌بندی الزامی است.";
   if (!data.authorId) errors.authorId = "انتخاب نویسنده الزامی است.";
   if (data.publishMode === "scheduled" && !data.publishAt) errors.publishAt = "تاریخ انتشار را انتخاب کنید.";
+  else if (data.publishMode === "scheduled" && !isFutureTehranDateTime(data.publishAt)) errors.publishAt = "زمان انتشار باید معتبر و در آینده باشد.";
   return errors;
 }

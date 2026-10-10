@@ -5,9 +5,10 @@ import { getCurrentProfile, getCurrentUser } from "@/lib/auth";
 import { defaultDashboardUser, formatRelativeDashboardTime, getDashboardSearchItems, getDashboardStats, normalizeArticleStatus, type DashboardActivity, type DashboardArticle, type DashboardNotification, type DashboardRole, type DashboardSearchItem, type DashboardStat, type DashboardUser } from "@/lib/dashboard-data";
 import { isSupabaseConfigured } from "@/lib/env";
 import { mockArticles } from "@/lib/posts-data";
+import { mockCategories } from "@/lib/taxonomy-data";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
-type ArticleRow = { id: string; title: string; slug: string; status: string; views: number; updated_at: string; published_at?: string | null; author?: { id: string; display_name: string } | null; category?: { id: string; name: string } | null };
+type ArticleRow = { id: string; title: string; slug: string; status: string; views: number; updated_at: string; published_at?: string | null; author?: { id: string; display_name: string } | null; category?: { id: string; name: string; slug: string } | null };
 type ProfileRow = { id: string; display_name: string; role: DashboardRole };
 type CategoryRow = { id: string; name: string };
 type CommentRow = { id: string; name: string; status: string; created_at: string; article?: { id: string; title: string } | null };
@@ -19,11 +20,11 @@ const initials = (name: string) => name.split(/\s+/).filter(Boolean).slice(0, 2)
 
 function mapArticle(row: ArticleRow, index: number): DashboardArticle {
   const authorName = row.author?.display_name ?? "تحریریه تک‌نما";
-  return { id: row.id, title: row.title, slug: row.slug, status: normalizeArticleStatus(row.status), views: Number(row.views) || 0, updatedAt: row.updated_at, publishedAt: row.published_at ?? undefined, author: { id: row.author?.id ?? "", name: authorName, initials: initials(authorName), color: avatarColors[index % avatarColors.length] }, category: { id: row.category?.id ?? "", name: row.category?.name ?? "بدون دسته‌بندی" } };
+  return { id: row.id, title: row.title, slug: row.slug, status: normalizeArticleStatus(row.status), views: Number(row.views) || 0, updatedAt: row.updated_at, publishedAt: row.published_at ?? undefined, author: { id: row.author?.id ?? "", name: authorName, initials: initials(authorName), color: avatarColors[index % avatarColors.length] }, category: { id: row.category?.id ?? "", name: row.category?.name ?? "بدون دسته‌بندی", slug: row.category?.slug ?? "" } };
 }
 
 function fallbackArticles(): DashboardArticle[] {
-  return mockArticles.map((article) => ({ id: article.id, title: article.title, slug: article.slug, status: article.status, views: article.views, updatedAt: article.updatedAt, publishedAt: article.publishedAt, author: article.author, category: article.category }));
+  return mockArticles.map((article) => { const category = mockCategories.find((item) => item.id === article.category.id); return { id: article.id, title: article.title, slug: article.slug, status: article.status, views: article.views, updatedAt: article.updatedAt, publishedAt: article.publishedAt, author: article.author, category: { ...article.category, slug: category?.slug ?? article.category.id } }; });
 }
 
 export const getDashboardCurrentUser = cache(async (): Promise<DashboardUser> => {
@@ -45,7 +46,7 @@ export const getDashboardOverview = cache(async (): Promise<DashboardOverview> =
 
   const supabase = await createSupabaseServerClient();
   const [articlesResult, profilesResult, categoriesResult, commentsResult] = await Promise.all([
-    supabase.from("articles").select("id,title,slug,status,views,updated_at,published_at,author:profiles!articles_author_id_fkey(id,display_name),category:categories(id,name)").order("updated_at", { ascending: false }).limit(100),
+    supabase.from("articles").select("id,title,slug,status,views,updated_at,published_at,author:profiles!articles_author_id_fkey(id,display_name),category:categories(id,name,slug)").order("updated_at", { ascending: false }).limit(100),
     supabase.from("profiles").select("id,display_name,role").eq("is_active", true).order("display_name"),
     supabase.from("categories").select("id,name").order("name"),
     supabase.from("comments").select("id,name,status,created_at,article:articles(id,title)", { count: "exact" }).eq("status", "pending").order("created_at", { ascending: false }).limit(20),

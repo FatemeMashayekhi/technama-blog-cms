@@ -3,14 +3,14 @@ const routes = [
   "/", "/articles", "/articles/future-of-generative-ai-in-software", "/about", "/contact", "/privacy", "/terms", "/search?q=react",
   "/categories", "/categories/programming", "/authors", "/authors/maryam", "/tags", "/tags/react",
   "/admin/dashboard", "/admin/posts", "/admin/posts/new", "/admin/authors", "/admin/categories", "/admin/comments", "/admin/analytics", "/admin/media", "/admin/settings", "/admin/tags",
-  "/dashboard", "/posts", "/comments", "/analytics", "/media", "/settings",
+  "/dashboard", "/posts", "/comments", "/analytics", "/media", "/settings", "/profile",
   "/robots.txt", "/sitemap.xml", "/manifest.webmanifest",
 ];
 
 const failures = [];
 for (const route of routes) {
   const response = await fetch(`${baseUrl}${route}`, { redirect: "manual" });
-  const expectedFailClosed = process.env.SMOKE_EXPECT_AUTH_UNCONFIGURED === "true" && route.startsWith("/admin/") && response.status === 503;
+  const expectedFailClosed = process.env.SMOKE_EXPECT_AUTH_UNCONFIGURED === "true" && (route.startsWith("/admin/") || route === "/profile") && response.status === 503;
   if (!expectedFailClosed && (response.status < 200 || response.status >= 400)) failures.push(`${route}: ${response.status}`);
   else console.log(`OK ${response.status} ${route}`);
 }

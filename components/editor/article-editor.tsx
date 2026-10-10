@@ -26,6 +26,7 @@ export function ArticleEditor({ mode, initialData, articleId: initialArticleId }
   const [pendingHref, setPendingHref] = useState("");
   const [notice, setNotice] = useState("");
   const autosaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const editRevision = useRef(0);
   const [articleId, setArticleId] = useState(initialArticleId);
 
   const plainContent = useMemo(() => data.content.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim(), [data.content]);
@@ -33,6 +34,7 @@ export function ArticleEditor({ mode, initialData, articleId: initialArticleId }
   const readingTime = Math.max(1, Math.ceil(wordCount / 220));
 
   const updateData = useCallback((patch: Partial<ArticleFormData>) => {
+    editRevision.current += 1;
     setData((current) => ({ ...current, ...patch }));
     setDirty(true);
     setSaveState("unsaved");
@@ -43,9 +45,10 @@ export function ArticleEditor({ mode, initialData, articleId: initialArticleId }
     if (!dirty) return;
     if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
     autosaveTimer.current = setTimeout(async () => {
+      const savingRevision = editRevision.current;
       setSaveState("saving");
       if (!articleId) { setSaveState("unsaved"); return; }
-      try { await saveArticleToCms(data, articleId); setDirty(false); setSaveState("saved"); }
+      try { await saveArticleToCms(data, articleId); if (editRevision.current === savingRevision) { setDirty(false); setSaveState("saved"); } else setSaveState("unsaved"); }
       catch (error) { setSaveState("unsaved"); setNotice(error instanceof Error ? error.message : "ذخیره خودکار انجام نشد."); window.setTimeout(() => setNotice(""), 2800); }
     }, 1800);
     return () => { if (autosaveTimer.current) clearTimeout(autosaveTimer.current); };
@@ -72,14 +75,13 @@ export function ArticleEditor({ mode, initialData, articleId: initialArticleId }
   const saveDraft = async (silent = false) => {
     if (!data.title.trim()) { setErrors((current) => ({ ...current, title: "عنوان مقاله الزامی است." })); document.getElementById("article-title")?.focus(); return false; }
     setSaveState("saving");
+    const savingRevision = editRevision.current;
     const draftData = { ...data, slug: data.slug || createSlug(data.title) || `draft-${Date.now()}`, status: "draft" as const };
     try {
       const saved = await saveArticleToCms(draftData, articleId);
       if (saved.id) setArticleId(saved.id);
     } catch (error) { setSaveState("unsaved"); showNotice(error instanceof Error ? error.message : "ذخیره مقاله انجام نشد."); return false; }
-    setData(draftData);
-    setDirty(false);
-    setSaveState("saved");
+    if (editRevision.current === savingRevision) { setData(draftData); setDirty(false); setSaveState("saved"); } else setSaveState("unsaved");
     if (!silent) showNotice("پیش‌نویس با موفقیت ذخیره شد.");
     return true;
   };
@@ -89,13 +91,12 @@ export function ArticleEditor({ mode, initialData, articleId: initialArticleId }
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length) { showNotice("لطفاً خطاهای فرم را برطرف کنید."); document.getElementById("article-title")?.scrollIntoView({ behavior: "smooth", block: "center" }); return; }
     setSaveState("saving");
+    const savingRevision = editRevision.current;
     try {
       const saved = await saveArticleToCms({ ...data, status: data.publishMode === "scheduled" ? "scheduled" : "published" }, articleId);
       if (saved.id) setArticleId(saved.id);
     } catch (error) { setSaveState("unsaved"); showNotice(error instanceof Error ? error.message : "انتشار مقاله انجام نشد."); return; }
-    setData((current) => ({ ...current, status: current.publishMode === "scheduled" ? "scheduled" : "published" }));
-    setDirty(false);
-    setSaveState("saved");
+    if (editRevision.current === savingRevision) { setData((current) => ({ ...current, status: current.publishMode === "scheduled" ? "scheduled" : "published" })); setDirty(false); setSaveState("saved"); } else setSaveState("unsaved");
     showNotice(data.publishMode === "scheduled" ? "انتشار مقاله با موفقیت زمان‌بندی شد." : "مقاله با موفقیت منتشر شد.");
   };
 
@@ -116,12 +117,12 @@ export function ArticleEditor({ mode, initialData, articleId: initialArticleId }
       <main className="min-w-0 space-y-4">
         <section className="rounded-(--radius) border border-(--border) bg-white p-5 sm:p-7">
           <label htmlFor="article-title" className="sr-only">عنوان مقاله</label>
-          <textarea id="article-title" rows={2} value={data.title} onChange={(event) => updateData({ title: event.target.value })} placeholder="عنوان مقاله را وارد کنید" className={`w-full resize-none border-0 bg-transparent text-xl font-bold leading-[1.7] tracking-[-.03em] text-(--text-strong) outline-none placeholder:text-(--text-faint) sm:text-3xl ${errors.title ? "placeholder:text-(--danger)" : ""}`} />
-          {errors.title && <p className="mt-1 text-[12px] text-(--danger)">{errors.title}</p>}
+          <textarea id="article-title" rows={2} maxLength={220} value={data.title} onChange={(event) => updateData({ title: event.target.value })} aria-invalid={Boolean(errors.title)} aria-describedby={errors.title ? "article-title-error" : undefined} placeholder="عنوان مقاله را وارد کنید" className={`min-h-24 w-full resize-y border-0 bg-transparent text-xl font-bold leading-[1.7] tracking-[-.03em] text-(--text-strong) outline-none placeholder:text-(--text-faint) sm:text-3xl ${errors.title ? "placeholder:text-(--danger)" : ""}`} />
+          {errors.title && <p id="article-title-error" role="alert" className="mt-1 text-[12px] text-(--danger)">{errors.title}</p>}
           <div className="mt-5 border-t border-(--border-subtle) pt-5"><div className="flex flex-col gap-2 sm:flex-row sm:items-end"><label className="min-w-0 flex-1"><span className="mb-1.5 block text-[13px] font-bold text-(--text-secondary)">نامک (Slug)</span><input dir="ltr" value={data.slug} onChange={(event) => updateData({ slug: event.target.value })} placeholder="ai-future-software-development" className={`h-10 w-full rounded-(--radius-sm) border bg-(--surface-subtle) px-3 text-left text-[14px] outline-none focus:border-(--focus-border) ${errors.slug ? "border-(--danger-border)" : "border-(--border)"}`} /></label><button type="button" onClick={() => updateData({ slug: createSlug(data.title) })} disabled={!data.title.trim()} className="h-10 rounded-(--radius-sm) border border-(--border) px-3 text-[13px] font-bold text-(--text-secondary) hover:bg-(--surface-subtle) disabled:opacity-40">ساخت از عنوان</button></div><p className="mt-1.5 text-[14px] text-(--text-muted)">این آدرس در URL مقاله استفاده می‌شود.</p>{errors.slug && <p className="mt-1 text-[12px] text-(--danger)">{errors.slug}</p>}</div>
         </section>
 
-        <section className="rounded-(--radius) border border-(--border) bg-white p-5 sm:p-6"><label htmlFor="article-excerpt" className="flex items-center justify-between text-[13px] font-bold text-(--text-secondary)"><span>خلاصه مقاله</span><span className={`font-normal ${data.excerpt.length > 200 ? "text-(--danger)" : "text-(--text-muted)"}`}>{new Intl.NumberFormat("fa-IR").format(data.excerpt.length)}/۲۲۰</span></label><textarea id="article-excerpt" value={data.excerpt} maxLength={220} onChange={(event) => updateData({ excerpt: event.target.value })} rows={3} placeholder="خلاصه کوتاهی از مقاله بنویسید..." className={`mt-3 w-full resize-none rounded-(--radius-sm) border bg-(--surface-subtle) p-3 text-[14px] leading-6 outline-none focus:border-(--focus-border) ${errors.excerpt ? "border-(--danger-border)" : "border-(--border)"}`} />{errors.excerpt && <p className="mt-1 text-[12px] text-(--danger)">{errors.excerpt}</p>}</section>
+        <section className="rounded-(--radius) border border-(--border) bg-white p-5 sm:p-6"><label htmlFor="article-excerpt" className="flex items-center justify-between text-[13px] font-bold text-(--text-secondary)"><span>خلاصه مقاله</span><span className={`font-normal ${data.excerpt.length > 200 ? "text-(--danger)" : "text-(--text-muted)"}`}>{new Intl.NumberFormat("fa-IR").format(data.excerpt.length)}/۲۲۰</span></label><textarea id="article-excerpt" value={data.excerpt} maxLength={220} onChange={(event) => updateData({ excerpt: event.target.value })} rows={4} aria-invalid={Boolean(errors.excerpt)} aria-describedby={errors.excerpt ? "article-excerpt-error" : undefined} placeholder="خلاصه کوتاهی از مقاله بنویسید..." className={`mt-3 min-h-28 w-full resize-y rounded-(--radius-sm) border bg-(--surface-subtle) p-3 text-[14px] leading-7 outline-none focus:border-(--focus-border) ${errors.excerpt ? "border-(--danger-border)" : "border-(--border)"}`} />{errors.excerpt && <p id="article-excerpt-error" role="alert" className="mt-1.5 text-[12px] text-(--danger)">{errors.excerpt}</p>}</section>
 
         <section><div className="mb-2 flex items-center justify-between px-1"><label className="text-[13px] font-bold text-(--text-secondary)">متن مقاله</label><div className="flex items-center gap-3 text-[12px] text-(--text-muted)"><span><FileText size={12} className="ml-1 inline" />{new Intl.NumberFormat("fa-IR").format(wordCount)} کلمه</span><span><Clock3 size={12} className="ml-1 inline" />{new Intl.NumberFormat("fa-IR").format(readingTime)} دقیقه مطالعه</span></div></div><RichTextEditor value={data.content} onChange={(content) => updateData({ content })} error={errors.content} />{errors.content && <p className="mt-1.5 px-1 text-[12px] text-(--danger)">{errors.content}</p>}</section>
       </main>

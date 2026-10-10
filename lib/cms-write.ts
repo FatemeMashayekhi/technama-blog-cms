@@ -43,7 +43,7 @@ async function syncTags(supabase: SupabaseClient, articleId: string, names: stri
 export async function createArticle(supabase: SupabaseClient, input: ArticleInput, currentUserId: string, canPublish: boolean) {
   const categoryId = input.categoryId ? await resolveCategoryId(supabase, input.categoryId) : null;
   const authorId = uuidPattern.test(input.authorId ?? "") && canPublish ? input.authorId! : currentUserId;
-  const requestedStatus = input.publishMode === "scheduled" ? "scheduled" : input.status;
+  const requestedStatus = input.status;
   const status = !canPublish && ["published", "scheduled"].includes(requestedStatus) ? "review" : requestedStatus;
   const content = sanitizeStoredArticleHtml(input.content);
   const plainText = content.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
@@ -78,7 +78,7 @@ export async function updateArticle(supabase: SupabaseClient, id: string, input:
   if (input.featuredImage !== undefined) patch.cover_url = input.featuredImage || null;
   if (input.seo !== undefined) patch.seo = input.seo;
   if (input.status !== undefined || input.publishMode !== undefined) {
-    const requested = input.publishMode === "scheduled" ? "scheduled" : (input.status ?? existing.status);
+    const requested = input.status ?? existing.status;
     const status = !canPublish && ["published", "scheduled"].includes(requested) ? "review" : requested;
     patch.status = status;
     if (status === "published" && !existing.published_at) patch.published_at = new Date().toISOString();

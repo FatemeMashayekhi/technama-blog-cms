@@ -17,7 +17,7 @@ export type DashboardArticle = {
   title: string;
   slug: string;
   author: { id: string; name: string; initials: string; color: string };
-  category: { id: string; name: string };
+  category: { id: string; name: string; slug: string };
   status: ArticleStatus;
   views: number;
   updatedAt: string;

@@ -119,7 +119,7 @@ test("production admin access fails closed when auth is misconfigured", async ()
   ]);
   assert.match(proxy, /process\.env\.NODE_ENV === "production"/);
   assert.match(proxy, /status: 503/);
-  assert.match(proxyEntry, /matcher: \["\/admin\/:path\*", "\/login"\]/);
+  assert.match(proxyEntry, /matcher: \["\/admin\/:path\*", "\/profile", "\/login"\]/);
   assert.match(layout, /process\.env\.NODE_ENV === "production"/);
 });
 

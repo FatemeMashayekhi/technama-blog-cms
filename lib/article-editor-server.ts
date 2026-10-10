@@ -1,6 +1,7 @@
 import { getMockArticleForEditor, type ArticleFormData } from "@/lib/article-editor";
 import { isSupabaseConfigured } from "@/lib/env";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { formatTehranDateTimeInput } from "@/lib/article-scheduling";
 
 export async function getArticleForEditor(id: string): Promise<ArticleFormData | null> {
   if (!isSupabaseConfigured) return getMockArticleForEditor(id);
@@ -14,7 +15,7 @@ export async function getArticleForEditor(id: string): Promise<ArticleFormData |
     featuredImage: data.cover_url ?? undefined, featuredImageName: data.cover_url?.split("/").pop(),
     status: data.status === "archived" ? "draft" : data.status,
     publishMode: data.status === "scheduled" ? "scheduled" : "now",
-    publishAt: data.scheduled_at ? new Date(data.scheduled_at).toISOString().slice(0, 16) : undefined,
+    publishAt: data.scheduled_at ? formatTehranDateTimeInput(data.scheduled_at) : undefined,
     seo: { title: String(seo.title ?? ""), description: String(seo.description ?? ""), canonicalUrl: String(seo.canonicalUrl ?? ""), ogImage: String(seo.ogImage ?? "") },
   };
 }

@@ -4,7 +4,7 @@ import { isSupabaseConfigured } from "@/lib/env";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export type AppRole = "admin" | "editor" | "author";
-export type AuthProfile = { id: string; display_name: string; username: string; avatar_url: string | null; role: AppRole; is_active: boolean };
+export type AuthProfile = { id: string; display_name: string; username: string; avatar_url: string | null; bio: string; role: AppRole; is_active: boolean };
 
 export const getCurrentUser = cache(async () => {
   if (!isSupabaseConfigured) return null;
@@ -17,7 +17,7 @@ export const getCurrentProfile = cache(async (): Promise<AuthProfile | null> => 
   const user = await getCurrentUser();
   if (!user) return null;
   const supabase = await createSupabaseServerClient();
-  const { data, error } = await supabase.from("profiles").select("id,display_name,username,avatar_url,role,is_active").eq("id", user.id).single();
+  const { data, error } = await supabase.from("profiles").select("id,display_name,username,avatar_url,bio,role,is_active").eq("id", user.id).single();
   if (error) throw new Error("Unable to load the authenticated profile.");
   return data as AuthProfile;
 });

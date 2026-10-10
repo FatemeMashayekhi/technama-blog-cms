@@ -4,8 +4,10 @@ import { NextResponse, type NextRequest } from "next/server";
 import { getSupabaseEnvironment, isSupabaseConfigured } from "@/lib/env";
 
 export async function updateSupabaseSession(request: NextRequest) {
+  const path = request.nextUrl.pathname;
+  const isProtectedPath = path === "/profile" || path.startsWith("/admin");
   if (!isSupabaseConfigured) {
-    if (process.env.NODE_ENV === "production" && request.nextUrl.pathname.startsWith("/admin")) {
+    if (process.env.NODE_ENV === "production" && isProtectedPath) {
       return NextResponse.json({ ok: false, error: "سامانه احراز هویت پیکربندی نشده است." }, { status: 503, headers: { "Cache-Control": "private, no-store" } });
     }
     return NextResponse.next({ request });
@@ -22,20 +24,19 @@ export async function updateSupabaseSession(request: NextRequest) {
       },
     },
   });
-  const path = request.nextUrl.pathname;
   let user: User | null = null;
   try {
     const result = await supabase.auth.getUser();
     user = result.data.user;
   } catch {
-    if (path.startsWith("/admin")) {
+    if (isProtectedPath) {
       const loginUrl = new URL("/login", request.url);
       loginUrl.searchParams.set("next", path);
       return NextResponse.redirect(loginUrl);
     }
     return response;
   }
-  if (path.startsWith("/admin") && !user) {
+  if (isProtectedPath && !user) {
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("next", path);
     return NextResponse.redirect(loginUrl);

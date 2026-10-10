@@ -19,3 +19,19 @@ export function getSupabaseEnvironment() {
   if (!result.success) throw new Error("Supabase environment variables are not configured.");
   return { url: result.data.NEXT_PUBLIC_SUPABASE_URL, publishableKey: result.data.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY };
 }
+
+const defaultSiteOrigin = "https://technama.ir";
+
+export function getSiteOrigin() {
+  const configured = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  if (!configured) return defaultSiteOrigin;
+  try {
+    return new URL(configured).origin;
+  } catch {
+    return defaultSiteOrigin;
+  }
+}
+
+export function getSiteUrl(path = "/") {
+  return new URL(path, `${getSiteOrigin()}/`).toString();
+}

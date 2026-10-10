@@ -69,8 +69,8 @@ export function safeAdminPath(value: unknown) {
   try {
     const parsed = new URL(value, "https://technama.invalid");
     const isInternal = parsed.origin === "https://technama.invalid";
-    const isAdmin = parsed.pathname === "/admin" || parsed.pathname.startsWith("/admin/");
-    return isInternal && isAdmin ? `${parsed.pathname}${parsed.search}${parsed.hash}` : "/admin/dashboard";
+    const isProtectedDestination = parsed.pathname === "/profile" || parsed.pathname === "/admin" || parsed.pathname.startsWith("/admin/");
+    return isInternal && isProtectedDestination ? `${parsed.pathname}${parsed.search}${parsed.hash}` : "/admin/dashboard";
   } catch {
     return "/admin/dashboard";
   }
