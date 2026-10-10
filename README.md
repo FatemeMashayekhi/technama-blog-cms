@@ -134,6 +134,19 @@ npm run dev
 - Production responses include a CSP, HSTS, MIME-sniffing protection, frame protection, a restrictive permissions policy, and private no-store caching for APIs.
 - Public articles, authors, and homepage data use ISR; session middleware runs only for `/admin` and `/login`.
 
+## Deploying to Vercel
+
+Supabase is hosted independently from the frontend, so the application can be deployed to Vercel without moving or duplicating the database. Before the first production deployment:
+
+1. Import the GitHub repository into Vercel and keep the framework preset on Next.js.
+2. Add every variable from `.env.example` in **Project Settings → Environment Variables**. Use the real production URL for `NEXT_PUBLIC_SITE_URL`, keep `NEXT_PUBLIC_ALLOW_SIGNUP=false`, and never prefix the server-only key or `RATE_LIMIT_SECRET` with `NEXT_PUBLIC_`.
+3. Apply both SQL migrations and run `npm run seed:all` against the same Supabase project used by the Vercel environment variables.
+4. In **Supabase → Authentication → URL Configuration**, set the Site URL to the production domain. Add `http://localhost:3000/**` for local development and the appropriate Vercel preview wildcard only when preview authentication is required.
+5. Trigger a new deployment after adding or changing environment variables; Vercel does not apply new values to deployments that already exist.
+6. Verify `/api/health`, sign-in, one protected `/admin` route, image uploads, comments, and an article detail page on the deployed domain.
+
+The publishable Supabase key is intended for browser use and is constrained by Row Level Security. `SUPABASE_SERVICE_ROLE_KEY` and `RATE_LIMIT_SECRET` must remain server-only Vercel secrets because privileged keys bypass Row Level Security.
+
 ## Available Scripts
 
 ```bash
