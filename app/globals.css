@@ -63,6 +63,25 @@ body {
 button, input, select, textarea { font: inherit; }
 button, a { -webkit-tap-highlight-color: transparent; }
 
+/* Native selects need an explicit end gutter in RTL; otherwise the browser
+   places its arrow against the left edge and over the selected label. */
+select:not([multiple]) {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-inline-end: 2.75rem;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2368737e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: left .875rem center;
+  background-size: 1rem;
+  cursor: pointer;
+}
+
+select:not([multiple]):dir(ltr) {
+  background-position: right .875rem center;
+}
+
+select:not([multiple]):disabled { cursor: not-allowed; }
+
 .public-site {
   background: var(--public-paper);
   color: var(--public-ink);
@@ -148,7 +167,8 @@ textarea:focus, textarea:focus-visible { outline: none !important; box-shadow: n
   :root { --border: #9aa6ad; --border-strong: #667680; --text-muted: #4d5b64; }
 }
 
-.tiptap { color: #33424c; font-size: 14px; line-height: 2.15; }
+.tiptap { min-height: 34rem; overflow-wrap: anywhere; color: #33424c; font-size: 14px; line-height: 2.15; }
+.tiptap:focus { background: linear-gradient(180deg, rgba(243,248,247,.45), transparent 8rem); }
 .tiptap > * + * { margin-top: 1rem; }
 .tiptap h2 { margin-top: 2.25rem; color: #182934; font-size: 1.35rem; font-weight: 700; line-height: 1.7; }
 .tiptap h3 { margin-top: 1.8rem; color: #22343f; font-size: 1.08rem; font-weight: 700; }
