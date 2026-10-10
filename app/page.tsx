@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { AuthorsSection } from "@/components/public/authors-section";
 import { CategoryNavigation } from "@/components/public/category-navigation";
 import { EditorialSpotlight } from "@/components/public/editorial-spotlight";
@@ -8,6 +9,7 @@ import { NewsletterSection } from "@/components/public/newsletter-section";
 import { PopularArticles } from "@/components/public/popular-articles";
 import { PublicFooter } from "@/components/public/public-footer";
 import { PublicHeader } from "@/components/public/public-header";
+import { HomePageSkeleton } from "@/components/skeletons/home-page-skeleton";
 import { TrendingTopics } from "@/components/public/trending-topics";
 import { getPublicHomeData } from "@/lib/public-service";
 import { mockTags } from "@/lib/taxonomy-data";
@@ -22,8 +24,12 @@ export const metadata: Metadata = {
   twitter: { card: "summary_large_image", title: "تک‌نما؛ مجله فناوری و نوآوری", description: "تحلیل عمیق فناوری؛ فراتر از تیترهای روز", images: ["/media/ai-future.svg"] },
 };
 
-export default async function HomePage() {
+async function HomeContent() {
   const data = await getPublicHomeData();
   const spotlight = data.latest[2] ?? data.featured;
-  return <div className="public-site min-h-screen"><PublicHeader/><main id="main-content" tabIndex={-1}><HeroSection featured={data.featured} secondary={data.secondary}/><TrendingTopics tags={mockTags}/><LatestArticles articles={data.latest}/><EditorialSpotlight article={spotlight}/><CategoryNavigation categories={data.categories}/><PopularArticles articles={data.popular}/><AuthorsSection authors={data.authors}/><NewsletterSection/></main><PublicFooter/></div>;
+  return <main id="main-content" tabIndex={-1}><HeroSection featured={data.featured} secondary={data.secondary}/><TrendingTopics tags={mockTags}/><LatestArticles articles={data.latest}/><EditorialSpotlight article={spotlight}/><CategoryNavigation categories={data.categories}/><PopularArticles articles={data.popular}/><AuthorsSection authors={data.authors}/><NewsletterSection/></main>;
+}
+
+export default function HomePage() {
+  return <div className="public-site min-h-screen"><PublicHeader/><Suspense fallback={<HomePageSkeleton/>}><HomeContent/></Suspense><PublicFooter/></div>;
 }

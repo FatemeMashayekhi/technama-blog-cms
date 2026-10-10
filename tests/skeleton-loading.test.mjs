@@ -8,7 +8,6 @@ const read = (path) => readFile(join(root, path), "utf8");
 
 test("required routes expose App Router loading states", async () => {
   const routes = [
-    "app/loading.tsx",
     "app/admin/dashboard/loading.tsx",
     "app/dashboard/loading.tsx",
     "app/articles/[slug]/loading.tsx",
@@ -18,6 +17,12 @@ test("required routes expose App Router loading states", async () => {
   ];
   const sources = await Promise.all(routes.map(read));
   sources.forEach((source) => assert.match(source, /Skeleton|Loading/));
+});
+
+test("homepage owns its skeleton instead of leaking a public shell into admin routes", async () => {
+  const page = await read("app/page.tsx");
+  assert.match(page, /Suspense fallback=\{<HomePageSkeleton\/>\}/);
+  await assert.rejects(read("app/loading.tsx"), /ENOENT/);
 });
 
 test("skeleton primitive is accessible and reduced-motion aware", async () => {
