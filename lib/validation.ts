@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { normalizeWebUrl } from "@/lib/url-security";
 
-const slug = z.string().trim().min(2).max(160).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "نامک باید با حروف انگلیسی، عدد و خط تیره نوشته شود.");
+const slug = z.string().trim().min(2).max(160).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "نامک فقط باید شامل حروف کوچک انگلیسی، عدد و خط تیره باشد.");
 const safeWebUrl = z.string().trim().max(2_000).refine((value) => !value || normalizeWebUrl(value, { allowRelative: true }) !== null, "آدرس اینترنتی معتبر نیست.");
 const optionalUuid = z.preprocess((value) => value === "" ? null : value, z.string().uuid().nullable().optional());
 const scheduledAt = z.preprocess((value) => value === "" ? null : value, z.string().datetime({ offset: true }).max(40).nullable().optional());
@@ -53,6 +53,8 @@ export const publicCommentReceiptSchema = z.object({
   ids: z.array(z.string().uuid()).min(1).max(20),
 }).refine((value) => value.articleId || value.articleSlug, { message: "شناسه یا نامک مقاله الزامی است.", path: ["articleId"] });
 export const commentModerationSchema = z.object({ status: z.enum(["pending", "approved", "rejected", "spam"]) });
+export const commentBulkModerationSchema = commentModerationSchema.extend({ ids: z.array(z.string().uuid()).min(1).max(100) });
+export const commentBulkDeleteSchema = z.object({ ids: z.array(z.string().uuid()).min(1).max(100) });
 export const mediaPatchSchema = z.object({ name: z.string().trim().min(1).max(180).optional(), altText: z.string().trim().max(300).optional() }).refine((value) => value.name !== undefined || value.altText !== undefined);
 export const categoryInputSchema = z.object({ name: z.string().trim().min(2).max(100), slug, description: z.string().trim().min(20).max(1_000), icon: z.string().max(60).default("Folder"), color: z.string().regex(/^#[0-9a-fA-F]{6}$/), parentId: optionalUuid, coverImage: safeWebUrl.optional().nullable(), seo: z.object({ title: z.string().max(70), description: z.string().max(180), canonicalUrl: safeWebUrl }) });
 export const tagInputSchema = z.object({ name: z.string().trim().min(1).max(60), slug });

@@ -1,12 +1,12 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { CalendarClock, ChevronDown, ImagePlus, SearchCheck, Tag, Trash2, Upload, UserRound } from "lucide-react";
+import { CalendarClock, ChevronDown, ImagePlus, LoaderCircle, SearchCheck, Tag, Trash2, Upload, UserRound } from "lucide-react";
 import { editorAuthors, type ArticleFormData, type ArticleFormErrors } from "@/lib/article-editor";
 import { uploadMedia } from "@/lib/media-service";
 import { technologyCategories as configuredTechnologyCategories } from "@/lib/posts-data";
 
-type EditorSidebarProps = { data: ArticleFormData; errors: ArticleFormErrors; onChange: (patch: Partial<ArticleFormData>) => void };
+type EditorSidebarProps = { data: ArticleFormData; errors: ArticleFormErrors; onChange: (patch: Partial<ArticleFormData>) => void; onUploadStateChange?: (uploading: boolean) => void };
 const technologyCategories: readonly string[] = configuredTechnologyCategories;
 const fieldClass = "h-11 w-full rounded-(--radius-sm) border border-(--border) bg-white px-3 text-[14px] text-(--text-secondary) outline-none transition focus:border-(--focus-border) disabled:cursor-not-allowed disabled:bg-(--surface-subtle) disabled:opacity-60";
 
@@ -16,13 +16,14 @@ function Section({ title, icon: Icon, children, open = true }: { title: string; 
 
 function ErrorText({ id, children }: { id: string; children?: string }) { return children ? <span id={id} role="alert" className="mt-1.5 block text-[12px] leading-5 text-(--danger)">{children}</span> : null; }
 
-export function EditorSidebar({ data, errors, onChange }: EditorSidebarProps) {
+export function EditorSidebar({ data, errors, onChange, onUploadStateChange }: EditorSidebarProps) {
   const [tagValue, setTagValue] = useState("");
   const [imageError, setImageError] = useState("");
+  const [imageUploading, setImageUploading] = useState(false);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const author = editorAuthors.find((item) => item.id === data.authorId);
   const addTag = () => { const next = tagValue.trim(); if (next && !data.tags.includes(next)) onChange({ tags: [...data.tags, next] }); setTagValue(""); };
-  const selectImage = async (file?: File) => { if (!file) return; setImageError(""); try { const asset = await uploadMedia(file); onChange({ featuredImage: asset.url, featuredImageName: asset.name }); } catch (error) { setImageError(error instanceof Error ? error.message : "آپلود تصویر انجام نشد."); } };
+  const selectImage = async (file?: File) => { if (!file || imageUploading) return; setImageError(""); if (!["image/jpeg", "image/png", "image/webp"].includes(file.type) || file.size <= 0 || file.size > 4 * 1024 * 1024) { setImageError("فقط تصویر JPEG، PNG یا WebP تا ۴ مگابایت مجاز است."); return; } setImageUploading(true); onUploadStateChange?.(true); try { const asset = await uploadMedia(file); onChange({ featuredImage: asset.url, featuredImageName: asset.name }); } catch (error) { setImageError(error instanceof Error ? error.message : "آپلود تصویر انجام نشد."); } finally { setImageUploading(false); onUploadStateChange?.(false); if (imageInputRef.current) imageInputRef.current.value = ""; } };
 
   return <aside className="min-w-0 space-y-3">
     <Section title="انتشار" icon={CalendarClock}>
@@ -47,8 +48,8 @@ export function EditorSidebar({ data, errors, onChange }: EditorSidebarProps) {
     </Section>
 
     <Section title="تصویر شاخص" icon={ImagePlus}>
-      <input ref={imageInputRef} type="file" accept=".jpg,.jpeg,.png,.webp" className="hidden" onChange={(event) => void selectImage(event.target.files?.[0])}/>{imageError && <p role="alert" className="mb-2 text-[12px] text-(--danger)">{imageError}</p>}
-      {data.featuredImage ? <div><div className="aspect-video w-full rounded-(--radius-sm) bg-cover bg-center" style={{ backgroundImage: `url(${data.featuredImage})` }} role="img" aria-label="پیش‌نمایش تصویر شاخص"/><p className="mt-2 truncate text-[12px] text-(--text-muted)" dir="ltr">{data.featuredImageName}</p><div className="mt-3 flex gap-2"><button type="button" onClick={() => imageInputRef.current?.click()} className="flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded-(--radius-sm) border border-(--border) text-[13px] font-bold text-(--text-secondary)"><Upload size={14}/> جایگزینی</button><button type="button" onClick={() => onChange({ featuredImage: undefined, featuredImageName: undefined })} aria-label="حذف تصویر شاخص" className="grid size-11 place-items-center rounded-(--radius-sm) border border-(--danger-border) text-(--danger)"><Trash2 size={15}/></button></div></div> : <button type="button" onClick={() => imageInputRef.current?.click()} className="grid aspect-video w-full place-items-center rounded-(--radius-sm) border border-dashed border-(--border-strong) bg-(--surface-subtle) text-center"><span><ImagePlus size={21} className="mx-auto text-(--text-muted)"/><strong className="mt-2 block text-[13px] text-(--text-secondary)">انتخاب تصویر</strong><small className="mt-1 block text-[12px] text-(--text-muted)">JPG، PNG یا WebP</small></span></button>}
+      <input ref={imageInputRef} type="file" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" className="hidden" disabled={imageUploading} onChange={(event) => void selectImage(event.target.files?.[0])}/>{imageUploading && <p role="status" className="mb-3 flex items-center gap-2 rounded-(--radius-sm) bg-(--accent-soft) px-3 py-2.5 text-[12px] font-bold text-(--brand-teal)"><LoaderCircle size={15} className="animate-spin"/> در حال بارگذاری تصویر...</p>}{imageError && <div role="alert" className="mb-3 rounded-(--radius-sm) bg-(--danger-soft) p-3 text-[12px] text-(--danger)"><p>{imageError}</p><button type="button" onClick={() => imageInputRef.current?.click()} className="mt-2 font-bold underline underline-offset-4">تلاش دوباره</button></div>}
+      {data.featuredImage ? <div><div className="aspect-video w-full rounded-(--radius-sm) bg-cover bg-center" style={{ backgroundImage: `url(${data.featuredImage})` }} role="img" aria-label="پیش‌نمایش تصویر شاخص"/><p className="mt-2 truncate text-[12px] text-(--text-muted)" dir="ltr">{data.featuredImageName}</p><div className="mt-3 flex gap-2"><button type="button" disabled={imageUploading} onClick={() => imageInputRef.current?.click()} className="flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded-(--radius-sm) border border-(--border) text-[13px] font-bold text-(--text-secondary) disabled:opacity-50"><Upload size={14}/> جایگزینی</button><button type="button" disabled={imageUploading} onClick={() => onChange({ featuredImage: undefined, featuredImageName: undefined })} aria-label="حذف تصویر شاخص" className="grid size-11 place-items-center rounded-(--radius-sm) border border-(--danger-border) text-(--danger) disabled:opacity-50"><Trash2 size={15}/></button></div></div> : <button type="button" disabled={imageUploading} onClick={() => imageInputRef.current?.click()} className="grid aspect-video w-full place-items-center rounded-(--radius-sm) border border-dashed border-(--border-strong) bg-(--surface-subtle) text-center disabled:opacity-50"><span><ImagePlus size={21} className="mx-auto text-(--text-muted)"/><strong className="mt-2 block text-[13px] text-(--text-secondary)">انتخاب تصویر</strong><small className="mt-1 block text-[12px] text-(--text-muted)">JPG، PNG یا WebP</small></span></button>}
     </Section>
 
     <Section title="تنظیمات SEO" icon={SearchCheck} open={false}>

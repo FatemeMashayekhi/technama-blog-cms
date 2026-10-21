@@ -97,7 +97,7 @@ export function validateArticle(data: ArticleFormData): ArticleFormErrors {
   if (!data.title.trim()) errors.title = "عنوان مقاله الزامی است.";
   else if (data.title.trim().length > 220) errors.title = "عنوان مقاله نمی‌تواند بیشتر از ۲۲۰ کاراکتر باشد.";
   if (!data.slug.trim()) errors.slug = "آدرس مقاله الزامی است.";
-  else if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(data.slug.trim())) errors.slug = "نامک باید با حروف انگلیسی، عدد و خط تیره نوشته شود.";
+  else if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(data.slug.trim())) errors.slug = "نامک فقط باید شامل حروف کوچک انگلیسی، عدد و خط تیره باشد.";
   if (data.excerpt.trim().length < 30) errors.excerpt = "خلاصه مقاله باید حداقل ۳۰ کاراکتر باشد.";
   else if (data.excerpt.length > 500) errors.excerpt = "خلاصه مقاله نمی‌تواند بیشتر از ۵۰۰ کاراکتر باشد.";
   if (!data.content.replace(/<[^>]*>/g, "").trim()) errors.content = "محتوای مقاله نمی‌تواند خالی باشد.";

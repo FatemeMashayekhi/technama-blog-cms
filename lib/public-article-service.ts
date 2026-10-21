@@ -37,16 +37,18 @@ async function loadDbArticle(slug: string): Promise<PublicArticleDetail | null> 
   try {
     const supabase = createSupabasePublicClient();
     const { data: row, error } = await supabase.from("articles").select("id,title,slug,excerpt,content,cover_url,status,views,created_at,updated_at,published_at,reading_time,author:profiles!articles_author_id_fkey(id,display_name,username,avatar_url,bio,role,is_active,created_at),category:categories(id,name,slug,color),article_tags(tag:tags(id,name,slug,created_at))").eq("slug", slug).eq("status", "published").lte("published_at", new Date().toISOString()).maybeSingle();
-    if (error || !row) return null;
+    if (error) { console.error("[public-article] query failed", { slug, message: error.message, code: error.code }); return null; }
+    if (!row) return null;
     const article = row as unknown as DbArticle;
     const base = mapDatabaseArticle(article);
-    const rpc = supabase.rpc as unknown as (name: string, args: Record<string, unknown>) => Promise<{ data: unknown; error: unknown }>;
-    const { data: commentRows } = await rpc("get_public_comments", { target_article_id: article.id });
+    const { data: commentRows, error: commentsError } = await supabase.rpc("get_public_comments", { target_article_id: article.id });
+    if (commentsError) console.error("[public-article] comments query failed", { slug, message: commentsError.message, code: commentsError.code });
     const comments: MagazineComment[] = ((commentRows ?? []) as DbComment[]).map((comment) => ({ id: comment.id, content: comment.content, commenter: { name: comment.name, email: "", initials: initials(comment.name), color: "bg-[#dbe8f2] text-[#315d78]" }, article: { id: article.id, title: article.title, slug: article.slug }, author: { id: article.author.id, name: article.author.display_name, initials: initials(article.author.display_name) }, status: "approved", likes: comment.likes, createdAt: comment.created_at, parentId: comment.parent_id ?? undefined }));
     const tags: Tag[] = (article.article_tags ?? []).flatMap((item) => item.tag ? [{ id: item.tag.id, name: item.tag.name, slug: item.tag.slug, articleCount: 0, createdAt: item.tag.created_at }] : []);
     const authorName = article.author.display_name;
     return { ...base, content: htmlToBlocks(article.content ?? ""), tags, approvedComments: comments, authorDetails: { id: article.author.id, name: authorName, username: article.author.username, email: "", avatar: article.author.avatar_url ?? undefined, avatarColor: "bg-[#dbe8f2] text-[#254e6e]", initials: initials(authorName), bio: article.author.bio ?? "", role: article.author.role, status: article.author.is_active ? "active" : "inactive", articleCount: 0, totalViews: 0, publishedRate: 0, joinedAt: article.author.created_at, joinedLabel: "عضو تحریریه", socialLinks: { website: "", linkedin: "", twitter: "", github: "" }, recentArticles: [] } };
-  } catch {
+  } catch (error) {
+    console.error("[public-article] mapping failed", { slug, message: error instanceof Error ? error.message : "unknown error" });
     return null;
   }
 }
