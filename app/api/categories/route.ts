@@ -7,7 +7,7 @@ import { categoryInputSchema } from "@/lib/validation";
 
 export async function GET() {
   if (!isSupabaseConfigured) return apiError("اتصال Supabase تنظیم نشده است.", 503);
-  try { const { data, error } = await (await createSupabaseServerClient()).from("categories").select("*").order("name").limit(200); if (error) throw error; return apiSuccess(data); }
+  try { const { data, error } = await (await createSupabaseServerClient()).from("categories").select("*,articles(count)").order("name").limit(200); if (error) throw error; return apiSuccess(data); }
   catch (error) { return handleApiError(error); }
 }
 export async function POST(request: Request) {
