@@ -34,7 +34,7 @@ function toMediaAsset(row: DbMedia): MediaAsset { const name = row.owner?.displa
 async function updateMedia(asset: MediaAsset, body: { name?: string; altText?: string }) { const response = await fetch(`/api/media/${asset.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }); const result = await response.json() as { ok: boolean; data?: DbMedia; error?: string }; if (!response.ok || !result.ok || !result.data) throw new Error(result.error || "ویرایش رسانه انجام نشد."); return toMediaAsset(result.data); }
 
 export async function uploadMedia(file: File): Promise<MediaAsset> {
-  if (!isSupabaseConfigured) return createUploadedAsset(file, URL.createObjectURL(file));
+  if (!isSupabaseConfigured) throw new Error("برای آپلود پایدار رسانه، اتصال Supabase را فعال کنید.");
   const form = new FormData(); form.set("file", file);
   const response = await fetch("/api/media", { method: "POST", body: form }); const result = await response.json() as { ok: boolean; data?: DbMedia; error?: string };
   if (!response.ok || !result.ok || !result.data) throw new Error(result.error || "آپلود رسانه انجام نشد."); return toMediaAsset(result.data);

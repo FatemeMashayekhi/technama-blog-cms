@@ -2,6 +2,7 @@
 
 import { Bell, CheckCheck, ChevronDown, ExternalLink, FileText, LogOut, Menu, MessageSquareText, Settings, UserRound } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { signOut } from "@/app/login/actions";
 import { DashboardSearch } from "@/components/layout/dashboard-search";
@@ -75,7 +76,7 @@ export function Header({ onMenuClick, title = "داشبورد تحریریه", s
       </div>
 
       <div ref={profileRef} className="relative">
-        <button type="button" aria-label={`نمایه ${user.name}`} aria-haspopup="menu" aria-expanded={profileOpen} onClick={() => { setProfileOpen((current) => !current); setNotificationsOpen(false); }} className="flex h-10 items-center gap-2 rounded-full bg-(--surface-muted) pl-2 text-xs font-bold text-(--brand-teal) hover:bg-(--accent-soft)"><span className="grid size-10 place-items-center rounded-full bg-white shadow-sm">{initials}</span><ChevronDown size={14} className={`hidden transition-transform sm:block ${profileOpen ? "rotate-180" : ""}`} /></button>
+        <button type="button" aria-label={`نمایه ${user.name}`} aria-haspopup="menu" aria-expanded={profileOpen} onClick={() => { setProfileOpen((current) => !current); setNotificationsOpen(false); }} className="flex h-10 items-center gap-2 rounded-full bg-(--surface-muted) pl-2 text-xs font-bold text-(--brand-teal) hover:bg-(--accent-soft)"><span className="grid size-10 place-items-center overflow-hidden rounded-full bg-white shadow-sm">{user.avatar ? <Image unoptimized src={user.avatar} alt="" width={40} height={40} className="size-full object-cover" /> : initials}</span><ChevronDown size={14} className={`hidden transition-transform sm:block ${profileOpen ? "rotate-180" : ""}`} /></button>
         {profileOpen && <div role="menu" className="absolute left-0 top-[calc(100%+10px)] w-60 overflow-hidden rounded-(--radius) border border-(--border) bg-white p-2 shadow-[0_20px_60px_rgba(16,35,49,.18)]">
           <div className="border-b border-(--border-subtle) px-3 py-3"><strong className="block truncate text-[13px] text-(--text-strong)">{user.name}</strong><span className="mt-1 block truncate text-[11px] text-(--text-muted)">{roleLabel}{user.email ? ` · ${user.email}` : ""}</span></div>
           <Link href="/profile" role="menuitem" onClick={() => setProfileOpen(false)} className="mt-1 flex min-h-11 items-center gap-3 rounded-(--radius-sm) px-3 text-[12px] font-bold text-(--text-secondary) hover:bg-(--surface-subtle)"><UserRound size={16} /> پروفایل من</Link>
