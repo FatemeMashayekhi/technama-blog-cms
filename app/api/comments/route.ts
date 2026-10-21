@@ -4,7 +4,7 @@ import { requireRole } from "@/lib/auth";
 import { isSupabaseConfigured } from "@/lib/env";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { publicCommentSchema, uuidSchema } from "@/lib/validation";
+import { commentBulkDeleteSchema, commentBulkModerationSchema, publicCommentSchema, uuidSchema } from "@/lib/validation";
 
 type ArticleSelector = { articleId?: string; articleSlug?: string };
 
@@ -25,9 +25,30 @@ export async function GET(request: Request) {
     if (url.searchParams.get("scope") === "admin") {
       const access = await requireRole(["admin", "editor", "author"]);
       if (!access.ok) return apiError(access.error, access.status);
-      const { data, error } = await supabase.from("comments").select("*,article:articles!comments_article_id_fkey(id,title,slug,author:profiles!articles_author_id_fkey(id,display_name))").order("created_at", { ascending: false }).limit(100);
-      if (error) throw error;
-      return apiSuccess(data);
+      const rows: unknown[] = [];
+      for (let from = 0; ; from += 1000) {
+        const { data, error } = await supabase.from("comments").select("*,article:articles!comments_article_id_fkey(id,title,slug,author:profiles!articles_author_id_fkey(id,display_name))").order("created_at", { ascending: false }).range(from, from + 999);
+        if (error) throw error;
+        rows.push(...(data ?? []));
+        if (!data || data.length < 1000) break;
+      }
+      if (url.searchParams.get("include") !== "filters") return apiSuccess(rows);
+
+      const articles: unknown[] = [];
+      const authors: unknown[] = [];
+      for (let from = 0; ; from += 1000) {
+        const { data, error } = await supabase.from("articles").select("id,title").order("title").range(from, from + 999);
+        if (error) throw error;
+        articles.push(...(data ?? []));
+        if (!data || data.length < 1000) break;
+      }
+      for (let from = 0; ; from += 1000) {
+        const { data, error } = await supabase.from("profiles").select("id,display_name").order("display_name").range(from, from + 999);
+        if (error) throw error;
+        authors.push(...(data ?? []));
+        if (!data || data.length < 1000) break;
+      }
+      return apiSuccess({ comments: rows, articles, authors });
     }
     const articleId = uuidSchema.safeParse(url.searchParams.get("articleId"));
     let resolvedArticleId = articleId.success ? articleId.data : "";
@@ -41,6 +62,36 @@ export async function GET(request: Request) {
     }
     const { data, error } = await supabase.rpc("get_public_comments", { target_article_id: resolvedArticleId });
     if (error) throw error;
+    return apiSuccess(data);
+  } catch (error) { return handleApiError(error); }
+}
+
+export async function PATCH(request: Request) {
+  if (!isSupabaseConfigured) return apiError("اتصال Supabase تنظیم نشده است.", 503);
+  try {
+    assertJsonMutation(request, 12 * 1024);
+    const access = await requireRole(["admin", "editor"]);
+    if (!access.ok) return apiError(access.error, access.status);
+    await enforceApiRateLimit(request, "comment-bulk-moderation", 30, 600, access.profile.id);
+    const input = commentBulkModerationSchema.parse(await request.json());
+    const { data, error } = await (await createSupabaseServerClient()).from("comments").update({ status: input.status }).in("id", input.ids).select("id,status,updated_at");
+    if (error) throw error;
+    if ((data?.length ?? 0) !== input.ids.length) return apiError("برخی دیدگاه‌ها پیدا نشدند یا قابل ویرایش نبودند.", 409);
+    return apiSuccess(data);
+  } catch (error) { return handleApiError(error); }
+}
+
+export async function DELETE(request: Request) {
+  if (!isSupabaseConfigured) return apiError("اتصال Supabase تنظیم نشده است.", 503);
+  try {
+    assertJsonMutation(request, 12 * 1024);
+    const access = await requireRole(["admin", "editor"]);
+    if (!access.ok) return apiError(access.error, access.status);
+    await enforceApiRateLimit(request, "comment-bulk-delete", 20, 600, access.profile.id);
+    const input = commentBulkDeleteSchema.parse(await request.json());
+    const { data, error } = await (await createSupabaseServerClient()).from("comments").delete().in("id", input.ids).select("id");
+    if (error) throw error;
+    if ((data?.length ?? 0) !== input.ids.length) return apiError("برخی دیدگاه‌ها پیدا نشدند یا قابل حذف نبودند.", 409);
     return apiSuccess(data);
   } catch (error) { return handleApiError(error); }
 }
