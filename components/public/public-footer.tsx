@@ -27,7 +27,7 @@ export function PublicFooter() {
         <div className="sm:col-span-2 lg:col-span-1">
           <Link href="/" className="inline-flex items-center gap-3" aria-label="تک‌نما؛ صفحه اصلی">
             <span className="grid size-12 place-items-center rounded-full bg-white text-(--public-ink) shadow-[0_8px_24px_rgba(0,0,0,.16)] sm:size-13"><PenLine size={20} /></span>
-            <span><strong className="block text-[20px] font-black tracking-[-.045em] sm:text-[22px]">تک‌نما</strong><small className="block text-[11px] font-bold text-white/45 sm:text-[12px]">مجله فناوری و نوآوری</small></span>
+            <span><strong className="block text-[20px] font-black tracking-[-.045em] sm:text-[22px]">تک‌نما</strong><small className="block text-[11px] font-bold text-white/68 sm:text-[12px]">مجله فناوری و نوآوری</small></span>
           </Link>
           <p className="mt-5 max-w-md text-[13px] leading-7 text-white/60 sm:text-[14px] lg:text-[15px] lg:leading-8">روایت دقیق و مستقل از فناوری، محصول و آدم‌هایی که آینده دیجیتال را می‌سازند؛ با زمینه، داده و نگاه انسانی.</p>
           <div className="mt-6 flex flex-wrap gap-2.5">
@@ -54,7 +54,7 @@ export function PublicFooter() {
       </div>
 
       <div className="relative border-t border-white/9">
-        <div className="mx-auto flex max-w-360 flex-col gap-4 px-4 py-6 text-[11px] font-medium text-white/42 sm:text-[12px] md:px-7 lg:flex-row lg:items-center lg:text-[13px]">
+        <div className="mx-auto flex max-w-360 flex-col gap-4 px-4 py-6 text-[11px] font-medium text-white/64 sm:text-[12px] md:px-7 lg:flex-row lg:items-center lg:text-[13px]">
           <p>© ۱۴۰۵ تک‌نما؛ تمام حقوق محفوظ است.</p>
           <p className="lg:mr-2">ساخته‌شده برای روایت دقیق‌تر فناوری.</p>
           <div className="flex flex-wrap items-center gap-x-5 gap-y-2 lg:mr-auto"><Link href="/privacy" className="transition hover:text-white">حریم خصوصی</Link><Link href="/terms" className="transition hover:text-white">قوانین استفاده</Link><Link href="/contact" className="transition hover:text-white">ارتباط با ما</Link></div>
@@ -65,5 +65,5 @@ export function PublicFooter() {
 }
 
 function Social({ icon: Icon, label }: { icon: typeof Camera; label: string }) {
-  return <span aria-label={`${label}؛ به‌زودی`} title={`${label}؛ به‌زودی`} className="grid size-11 place-items-center rounded-full border border-white/12 bg-white/[.035] text-white/48 transition hover:border-white/25 hover:text-white"><Icon size={16} /></span>;
+  return <span role="img" aria-label={`${label}؛ به‌زودی`} title={`${label}؛ به‌زودی`} className="grid size-11 place-items-center rounded-full border border-white/12 bg-white/[.035] text-white/68 transition hover:border-white/25 hover:text-white"><Icon size={16} /></span>;
 }

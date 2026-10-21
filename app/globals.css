@@ -27,7 +27,7 @@
   --public-ink: #102a3a;
   --public-paper: #fbfaf6;
   --public-paper-deep: #f2efe7;
-  --editorial-coral: #c94f35;
+  --editorial-coral: #b7442e;
   --editorial-coral-dark: #a83b27;
   --editorial-gold: #c8962e;
   --border-subtle: #edf0f2;
@@ -36,7 +36,7 @@
   --focus-border: #8caaa6;
   --text-strong: #172630;
   --text-secondary: #53616b;
-  --text-muted: #75818a;
+  --text-muted: #5b6871;
   --text-faint: #929ca1;
   --text-on-dark: #d8e5e8;
   --text-on-dark-muted: #aebbc5;
@@ -123,9 +123,13 @@ select:not([multiple]):disabled { cursor: not-allowed; }
   letter-spacing: .04em;
 }
 
-.content-auto {
-  content-visibility: auto;
-  contain-intrinsic-size: auto 720px;
+.content-auto { position: relative; }
+
+@media (min-width: 768px) {
+  .content-auto {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 960px;
+  }
 }
 
 @keyframes skeletonPulse {
@@ -145,6 +149,11 @@ textarea:focus, textarea:focus-visible { outline: none !important; box-shadow: n
 
 .dashboard-shell :is(a, button):focus-visible {
   box-shadow: 0 0 0 3px rgba(15, 123, 112, 0.18);
+}
+
+.public-site :is(a, button):focus-visible {
+  border-radius: .5rem;
+  box-shadow: 0 0 0 3px rgba(23, 111, 102, .26);
 }
 
 ::selection { background: #cfe8e4; color: #102f2c; }
