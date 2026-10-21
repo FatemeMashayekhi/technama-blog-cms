@@ -10,6 +10,19 @@ export function assertJsonMutation(request: Request, maxBytes = 64 * 1024) {
   });
 }
 
+export async function readJsonMutation(request: Request, maxBytes = 64 * 1024): Promise<unknown> {
+  assertJsonMutation(request, maxBytes);
+  const body = await request.text();
+  if (new TextEncoder().encode(body).byteLength > maxBytes) {
+    throw new RequestSecurityError("حجم درخواست بیشتر از حد مجاز است.", 413, "REQUEST_TOO_LARGE");
+  }
+  try {
+    return JSON.parse(body) as unknown;
+  } catch {
+    throw new RequestSecurityError("بدنه JSON معتبر نیست.", 400, "INVALID_JSON");
+  }
+}
+
 export async function enforceApiRateLimit(
   request: Request,
   namespace: string,

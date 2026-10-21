@@ -40,8 +40,20 @@ test("every mutating API route validates same-origin requests and applies rate l
   for (const file of await routeFiles()) {
     const source = await read(file);
     if (!/export async function (?:POST|PUT|PATCH|DELETE)/.test(source)) continue;
-    assert.match(source, /assert(?:Json)?Mutation(?:Request)?\(/, `${file} lacks mutation request validation`);
+    assert.match(source, /(?:assert(?:Json)?Mutation(?:Request)?|readJsonMutation)\(/, `${file} lacks mutation request validation`);
     assert.match(source, /enforceApiRateLimit\(/, `${file} lacks a distributed rate limit`);
+  }
+});
+
+test("JSON mutations enforce the actual decoded body size", async () => {
+  const security = await read("lib/api-security.ts");
+  assert.match(security, /await request\.text\(\)/);
+  assert.match(security, /TextEncoder\(\)\.encode\(body\)\.byteLength > maxBytes/);
+  assert.match(security, /INVALID_JSON/);
+  for (const file of await routeFiles()) {
+    const source = await read(file);
+    if (!/export async function (?:POST|PUT|PATCH)/.test(source) || source.includes("multipart/form-data")) continue;
+    assert.doesNotMatch(source, /request\.json\(\)/, `${file} bypasses the bounded JSON reader`);
   }
 });
 

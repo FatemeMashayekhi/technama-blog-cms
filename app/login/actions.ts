@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
-import { isSupabaseConfigured } from "@/lib/env";
+import { getSiteOrigin, isSupabaseConfigured } from "@/lib/env";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { safeAdminPath, stableSecuritySubject } from "@/lib/request-security";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
@@ -43,7 +43,7 @@ export async function signUp(_state: AuthActionState, formData: FormData): Promi
   try {
     if (!await allowAuthAttempt("signup", input.data.email, 4)) return { error: "تعداد درخواست‌ها زیاد است؛ کمی بعد دوباره امتحان کنید." };
     const supabase = await createSupabaseServerClient();
-    const origin = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+    const origin = getSiteOrigin();
     const { error } = await supabase.auth.signUp({ email: input.data.email, password: input.data.password, options: { data: { display_name: input.data.displayName }, emailRedirectTo: `${origin}/auth/callback?next=${encodeURIComponent(safeAdminPath(formData.get("next")))}` } });
     if (error) return { error: authErrorMessage(error) };
   } catch (error) { return { error: authErrorMessage(error instanceof Error ? error : {}) }; }

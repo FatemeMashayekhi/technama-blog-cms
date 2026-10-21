@@ -1,6 +1,6 @@
 import { revalidatePath } from "next/cache";
 import { apiError, apiSuccess, handleApiError } from "@/lib/api-response";
-import { assertJsonMutation, enforceApiRateLimit } from "@/lib/api-security";
+import { enforceApiRateLimit, readJsonMutation } from "@/lib/api-security";
 import { requireRole } from "@/lib/auth";
 import { updateArticle } from "@/lib/cms-write";
 import { isSupabaseConfigured } from "@/lib/env";
@@ -12,12 +12,11 @@ type Context = { params: Promise<{ id: string }> };
 export async function PATCH(request: Request, { params }: Context) {
   if (!isSupabaseConfigured) return apiError("اتصال Supabase تنظیم نشده است.", 503);
   try {
-    assertJsonMutation(request, 220 * 1024);
     const access = await requireRole(["admin", "editor", "author"]);
     if (!access.ok) return apiError(access.error, access.status);
     await enforceApiRateLimit(request, "article-write", 60, 600, access.profile.id);
     const id = uuidSchema.parse((await params).id);
-    const input = articlePatchSchema.parse(await request.json());
+    const input = articlePatchSchema.parse(await readJsonMutation(request, 220 * 1024));
     const article = await updateArticle(await createSupabaseServerClient(), id, input, access.profile.id, access.profile.role !== "author");
     revalidatePath("/");
     revalidatePath("/articles");

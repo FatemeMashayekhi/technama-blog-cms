@@ -1,5 +1,5 @@
 import { apiError, apiSuccess, handleApiError } from "@/lib/api-response";
-import { assertJsonMutation, enforceApiRateLimit } from "@/lib/api-security";
+import { enforceApiRateLimit, readJsonMutation } from "@/lib/api-security";
 import { isSupabaseConfigured } from "@/lib/env";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { publicCommentReceiptSchema } from "@/lib/validation";
@@ -8,8 +8,7 @@ export async function POST(request: Request) {
   if (!isSupabaseConfigured) return apiError("اتصال Supabase تنظیم نشده است.", 503);
   if (!process.env.SUPABASE_SERVICE_ROLE_KEY) return apiError("سرویس پیگیری دیدگاه موقتاً در دسترس نیست.", 503);
   try {
-    assertJsonMutation(request, 8 * 1024);
-    const input = publicCommentReceiptSchema.parse(await request.json());
+    const input = publicCommentReceiptSchema.parse(await readJsonMutation(request, 8 * 1024));
     await enforceApiRateLimit(request, "comment-status", 30, 600);
     const admin = createSupabaseAdminClient();
     let articleQuery = admin.from("articles").select("id");

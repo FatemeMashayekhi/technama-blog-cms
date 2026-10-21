@@ -26,7 +26,10 @@ export function getSiteOrigin() {
   const configured = process.env.NEXT_PUBLIC_SITE_URL?.trim();
   if (!configured) return defaultSiteOrigin;
   try {
-    return new URL(configured).origin;
+    const url = new URL(configured);
+    const isLocalhost = url.hostname === "localhost" || url.hostname === "127.0.0.1" || url.hostname === "::1";
+    if (process.env.NODE_ENV === "production" && isLocalhost) return defaultSiteOrigin;
+    return url.origin;
   } catch {
     return defaultSiteOrigin;
   }

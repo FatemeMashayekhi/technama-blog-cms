@@ -1,5 +1,5 @@
 import { apiError, apiSuccess, handleApiError } from "@/lib/api-response";
-import { assertJsonMutation, enforceApiRateLimit } from "@/lib/api-security";
+import { enforceApiRateLimit, readJsonMutation } from "@/lib/api-security";
 import { requireRole } from "@/lib/auth";
 import { isSupabaseConfigured } from "@/lib/env";
 import { assertMutationRequest } from "@/lib/request-security";
@@ -11,11 +11,10 @@ type Context = { params: Promise<{ id: string }> };
 export async function PATCH(request: Request, { params }: Context) {
   if (!isSupabaseConfigured) return apiError("اتصال Supabase تنظیم نشده است.", 503);
   try {
-    assertJsonMutation(request, 8 * 1024);
     const access = await requireRole(["admin", "editor", "author"]);
     if (!access.ok) return apiError(access.error, access.status);
     await enforceApiRateLimit(request, "media-write", 60, 600, access.profile.id);
-    const input = mediaPatchSchema.parse(await request.json()); const id = uuidSchema.parse((await params).id);
+    const input = mediaPatchSchema.parse(await readJsonMutation(request, 8 * 1024)); const id = uuidSchema.parse((await params).id);
     const patch = { ...(input.name !== undefined ? { name: input.name } : {}), ...(input.altText !== undefined ? { alt_text: input.altText } : {}) };
     const userClient = await createSupabaseServerClient();
     const { data: permitted, error: permissionError } = await userClient.from("media").select("id").eq("id", id).single();

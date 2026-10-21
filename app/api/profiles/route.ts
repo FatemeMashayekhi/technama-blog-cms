@@ -1,7 +1,7 @@
 import { apiError, apiSuccess, handleApiError } from "@/lib/api-response";
-import { assertJsonMutation, enforceApiRateLimit } from "@/lib/api-security";
+import { enforceApiRateLimit, readJsonMutation } from "@/lib/api-security";
 import { requireRole } from "@/lib/auth";
-import { isSupabaseConfigured } from "@/lib/env";
+import { getSiteOrigin, isSupabaseConfigured } from "@/lib/env";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { inviteAuthorSchema } from "@/lib/validation";
@@ -14,5 +14,5 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   if (!isSupabaseConfigured) return apiError("اتصال Supabase تنظیم نشده است.", 503);
   if (!process.env.SUPABASE_SERVICE_ROLE_KEY) return apiError("کلید server-only برای دعوت نویسنده تنظیم نشده است.", 503);
-  try { assertJsonMutation(request,16*1024);const access=await requireRole(["admin"]);if(!access.ok)return apiError(access.error,access.status);await enforceApiRateLimit(request,"profile-invite",10,3600,access.profile.id);const input=inviteAuthorSchema.parse(await request.json());const admin=createSupabaseAdminClient();const origin=process.env.NEXT_PUBLIC_SITE_URL??"http://localhost:3000";const{data,error}=await admin.auth.admin.inviteUserByEmail(input.email,{data:{display_name:input.displayName},redirectTo:`${origin}/auth/callback`});if(error)throw error;if(data.user){const{error:updateError}=await admin.from("profiles").update({role:input.role}).eq("id",data.user.id);if(updateError)throw updateError;}return apiSuccess({id:data.user?.id,email:input.email},201);}catch(error){return handleApiError(error);}
+  try { const access=await requireRole(["admin"]);if(!access.ok)return apiError(access.error,access.status);await enforceApiRateLimit(request,"profile-invite",10,3600,access.profile.id);const input=inviteAuthorSchema.parse(await readJsonMutation(request,16*1024));const admin=createSupabaseAdminClient();const origin=getSiteOrigin();const{data,error}=await admin.auth.admin.inviteUserByEmail(input.email,{data:{display_name:input.displayName},redirectTo:`${origin}/auth/callback`});if(error)throw error;if(data.user){const{error:updateError}=await admin.from("profiles").update({role:input.role}).eq("id",data.user.id);if(updateError)throw updateError;}return apiSuccess({id:data.user?.id,email:input.email},201);}catch(error){return handleApiError(error);}
 }

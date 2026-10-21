@@ -1,5 +1,5 @@
 import { apiError, apiSuccess, handleApiError } from "@/lib/api-response";
-import { assertJsonMutation, enforceApiRateLimit } from "@/lib/api-security";
+import { enforceApiRateLimit, readJsonMutation } from "@/lib/api-security";
 import { requireRole } from "@/lib/auth";
 import { isSupabaseConfigured } from "@/lib/env";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
@@ -69,11 +69,10 @@ export async function GET(request: Request) {
 export async function PATCH(request: Request) {
   if (!isSupabaseConfigured) return apiError("اتصال Supabase تنظیم نشده است.", 503);
   try {
-    assertJsonMutation(request, 12 * 1024);
     const access = await requireRole(["admin", "editor"]);
     if (!access.ok) return apiError(access.error, access.status);
     await enforceApiRateLimit(request, "comment-bulk-moderation", 30, 600, access.profile.id);
-    const input = commentBulkModerationSchema.parse(await request.json());
+    const input = commentBulkModerationSchema.parse(await readJsonMutation(request, 12 * 1024));
     const { data, error } = await (await createSupabaseServerClient()).from("comments").update({ status: input.status }).in("id", input.ids).select("id,status,updated_at");
     if (error) throw error;
     if ((data?.length ?? 0) !== input.ids.length) return apiError("برخی دیدگاه‌ها پیدا نشدند یا قابل ویرایش نبودند.", 409);
@@ -84,11 +83,10 @@ export async function PATCH(request: Request) {
 export async function DELETE(request: Request) {
   if (!isSupabaseConfigured) return apiError("اتصال Supabase تنظیم نشده است.", 503);
   try {
-    assertJsonMutation(request, 12 * 1024);
     const access = await requireRole(["admin", "editor"]);
     if (!access.ok) return apiError(access.error, access.status);
     await enforceApiRateLimit(request, "comment-bulk-delete", 20, 600, access.profile.id);
-    const input = commentBulkDeleteSchema.parse(await request.json());
+    const input = commentBulkDeleteSchema.parse(await readJsonMutation(request, 12 * 1024));
     const { data, error } = await (await createSupabaseServerClient()).from("comments").delete().in("id", input.ids).select("id");
     if (error) throw error;
     if ((data?.length ?? 0) !== input.ids.length) return apiError("برخی دیدگاه‌ها پیدا نشدند یا قابل حذف نبودند.", 409);
@@ -99,8 +97,7 @@ export async function DELETE(request: Request) {
 export async function POST(request: Request) {
   if (!isSupabaseConfigured) return apiError("اتصال Supabase تنظیم نشده است.", 503);
   try {
-    assertJsonMutation(request, 8 * 1024);
-    const input = publicCommentSchema.parse(await request.json());
+    const input = publicCommentSchema.parse(await readJsonMutation(request, 8 * 1024));
     if (input.website) return apiSuccess({ accepted: true }, 202);
     const supabase = await createSupabaseServerClient();
     await enforceApiRateLimit(request, "comment", 5, 600);
