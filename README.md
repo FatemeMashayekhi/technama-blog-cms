@@ -71,7 +71,7 @@ The goal is to demonstrate the design and development of a realistic CMS-scale p
 
 ### Requirements
 
-- Node.js `20.9` or later
+- Node.js `22.x`
 - npm
 
 ### Installation

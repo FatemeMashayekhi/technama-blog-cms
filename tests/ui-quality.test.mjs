@@ -50,7 +50,8 @@ test("public content excludes drafts and inactive authors", async () => {
   ]);
   assert.match(articleService, /publishedPublicArticles/);
   assert.match(authorService, /status === "active"/);
-  assert.match(searchService, /status === "active"/);
+  assert.match(searchService, /getPublicAuthors/);
+  assert.match(searchService, /getPublishedArticles/);
 });
 
 test("all repaired public destinations exist", async () => {

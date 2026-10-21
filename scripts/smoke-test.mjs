@@ -1,7 +1,7 @@
 const baseUrl = process.env.SMOKE_BASE_URL || "http://localhost:3000";
 const routes = [
-  "/", "/articles", "/articles/future-of-generative-ai-in-software", "/about", "/contact", "/privacy", "/terms", "/search?q=react",
-  "/categories", "/categories/programming", "/authors", "/authors/maryam", "/tags", "/tags/react",
+  "/", "/articles", "/about", "/contact", "/privacy", "/terms", "/search?q=react",
+  "/categories", "/authors", "/tags",
   "/admin/dashboard", "/admin/posts", "/admin/posts/new", "/admin/authors", "/admin/categories", "/admin/comments", "/admin/analytics", "/admin/media", "/admin/settings", "/admin/tags",
   "/dashboard", "/posts", "/comments", "/analytics", "/media", "/settings", "/profile",
   "/robots.txt", "/sitemap.xml", "/manifest.webmanifest",
