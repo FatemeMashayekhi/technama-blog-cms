@@ -3,11 +3,12 @@ import { ArrowLeft, BookOpenCheck, CheckCircle2, Compass, FileSearch, HeartHands
 import Link from "next/link";
 import { PublicFooter } from "@/components/public/public-footer";
 import { PublicHeader } from "@/components/public/public-header";
+import { getSiteUrl } from "@/lib/env";
 
 export const metadata: Metadata = {
   title: "درباره تک‌نما؛ تحریریه‌ای برای فهم عمیق فناوری",
   description: "با داستان، مأموریت، اصول تحریریه و فرایند تولید محتوای مجله فناوری تک‌نما آشنا شوید.",
-  alternates: { canonical: "https://technama.ir/about" },
+  alternates: { canonical: getSiteUrl("/about") },
 };
 
 const values = [

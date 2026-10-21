@@ -56,18 +56,48 @@ async function loadDbArticle(slug: string): Promise<PublicArticleDetail | null> 
 export const getArticleBySlug = cache(async (slug: string): Promise<PublicArticleDetail | null> => {
   const localArticle = publishedPublicArticles.find((item) => item.slug === slug);
   if (!isSupabaseConfigured) return localArticle ? createArticleDetail(localArticle) : null;
-  const databaseArticle = await loadDbArticle(slug);
-  return databaseArticle ?? (localArticle ? createArticleDetail(localArticle) : null);
+  return loadDbArticle(slug);
 });
 export async function getRelatedArticles(article: PublicArticle): Promise<PublicArticle[]> {
   const localRelated = () => publishedPublicArticles.filter((item) => item.id !== article.id).sort((a, b) => Number(b.category.id === article.category.id) - Number(a.category.id === article.category.id)).slice(0, 3);
-  if (!isSupabaseConfigured || publishedPublicArticles.some((item) => item.id === article.id)) return localRelated();
+  if (!isSupabaseConfigured) return localRelated();
   try {
     const { data, error } = await createSupabasePublicClient().from("articles").select("id,title,slug,excerpt,cover_url,status,views,created_at,updated_at,published_at,reading_time,author:profiles!articles_author_id_fkey(id,display_name,username,avatar_url,bio,role,is_active,created_at),category:categories(id,name,slug,color)").eq("status", "published").neq("id", article.id).lte("published_at", new Date().toISOString()).order("published_at", { ascending: false }).limit(3);
-    if (error || !data?.length) return localRelated();
+    if (error || !data?.length) return [];
     return (data as unknown as DbArticle[]).map(mapDatabaseArticle);
   } catch {
-    return localRelated();
+    return [];
   }
 }
-export function getPublishedArticleSlugs() { return publishedPublicArticles.map((item) => item.slug); }
+
+export async function getPublishedArticles(limit = 200): Promise<PublicArticle[]> {
+  if (!isSupabaseConfigured) return publishedPublicArticles.slice(0, limit);
+  try {
+    const { data, error } = await createSupabasePublicClient().from("articles")
+      .select("id,title,slug,excerpt,cover_url,status,views,created_at,updated_at,published_at,reading_time,author:profiles!articles_author_id_fkey(id,display_name,username,avatar_url,bio,role,is_active,created_at),category:categories(id,name,slug,color)")
+      .eq("status", "published")
+      .lte("published_at", new Date().toISOString())
+      .order("published_at", { ascending: false })
+      .limit(Math.min(Math.max(limit, 1), 500));
+    if (error) throw error;
+    return ((data ?? []) as unknown as DbArticle[]).map(mapDatabaseArticle);
+  } catch (error) {
+    console.error("[public-article] archive query failed", { message: error instanceof Error ? error.message : "unknown error" });
+    return [];
+  }
+}
+
+export async function getPublishedArticleSlugs() {
+  if (!isSupabaseConfigured) return publishedPublicArticles.map((item) => item.slug);
+  const { data, error } = await createSupabasePublicClient().from("articles")
+    .select("slug")
+    .eq("status", "published")
+    .lte("published_at", new Date().toISOString())
+    .order("published_at", { ascending: false })
+    .limit(5_000);
+  if (error) {
+    console.error("[public-article] sitemap query failed", { message: error.message, code: error.code });
+    return [];
+  }
+  return (data ?? []).map((item) => item.slug);
+}

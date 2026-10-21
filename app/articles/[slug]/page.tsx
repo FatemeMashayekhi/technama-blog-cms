@@ -16,7 +16,7 @@ import { getArticleBySlug, getPublishedArticleSlugs, getRelatedArticles } from "
 type Props = { params: Promise<{ slug: string }> };
 export const dynamicParams = true;
 export const revalidate = 60;
-export async function generateStaticParams() { return getPublishedArticleSlugs().map((slug) => ({ slug })); }
+export async function generateStaticParams() { return (await getPublishedArticleSlugs()).map((slug) => ({ slug })); }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;

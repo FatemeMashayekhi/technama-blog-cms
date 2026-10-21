@@ -12,8 +12,8 @@ export const metadata: Metadata = {
   alternates: { canonical: "/tags" },
 };
 
-export default function TagsPage() {
-  const tags = getPublicTags();
+export default async function TagsPage() {
+  const tags = await getPublicTags();
   const directory: TagDirectoryItem[] = tags.map((tag) => ({
     id: tag.id,
     name: tag.name,

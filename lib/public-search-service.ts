@@ -1,6 +1,7 @@
-import { mockAuthors } from "@/lib/authors-data";
-import { publicArticles, type PublicArticle, type PublicAuthor, type PublicCategory } from "@/lib/public-data";
-import { mockCategories } from "@/lib/taxonomy-data";
+import { getPublishedArticles } from "@/lib/public-article-service";
+import { getPublicAuthors } from "@/lib/public-author-service";
+import { getPublicCategories } from "@/lib/public-category-service";
+import type { PublicArticle, PublicAuthor, PublicCategory } from "@/lib/public-data";
 
 export type PublicSearchSort = "relevance" | "newest" | "views";
 export type ScoredArticle = { article: PublicArticle; relevance: number };
@@ -30,42 +31,42 @@ export async function searchPublicContent(rawQuery: string): Promise<PublicSearc
   const phrase = normalize(query);
   if (!phrase) return { query: "", articles: [], authors: [], categories: [] };
   const tokens = phrase.split(" ").filter((token) => token.length > 1);
+  const [publishedArticles, publicAuthors, publicCategories] = await Promise.all([
+    getPublishedArticles(500),
+    getPublicAuthors(),
+    getPublicCategories(),
+  ]);
 
-  const articles = publicArticles
-    .filter((article) => article.status === "published")
-    .map((article) => {
-      const relevance = scoreField(article.title, phrase, tokens, 12)
-        + scoreField(article.category.name, phrase, tokens, 8)
-        + scoreField(article.categorySlug, phrase, tokens, 5)
-        + scoreField(article.excerpt, phrase, tokens, 4)
-        + scoreField(article.author.name, phrase, tokens, 3)
-        + scoreField(article.authorUsername, phrase, tokens, 3);
-      return { article, relevance };
-    })
-    .filter((result) => result.relevance > 0)
+  const articles = publishedArticles.map((article) => {
+    const relevance = scoreField(article.title, phrase, tokens, 12)
+      + scoreField(article.category.name, phrase, tokens, 8)
+      + scoreField(article.categorySlug, phrase, tokens, 5)
+      + scoreField(article.excerpt, phrase, tokens, 4)
+      + scoreField(article.author.name, phrase, tokens, 3)
+      + scoreField(article.authorUsername, phrase, tokens, 3);
+    return { article, relevance };
+  }).filter((result) => result.relevance > 0)
     .sort((first, second) => second.relevance - first.relevance || second.article.views - first.article.views);
 
-  const authors = mockAuthors
-    .filter((author) => author.status === "active")
-    .map((author) => ({
-      author,
-      relevance: scoreField(author.name, phrase, tokens, 8) + scoreField(author.username, phrase, tokens, 8) + scoreField(author.bio, phrase, tokens, 3),
-    }))
-    .filter((result) => result.relevance > 0)
+  const authors = publicAuthors.map((author) => ({
+    author,
+    relevance: scoreField(author.name, phrase, tokens, 8)
+      + scoreField(author.username, phrase, tokens, 8)
+      + scoreField(author.bio, phrase, tokens, 3),
+  })).filter((result) => result.relevance > 0)
     .sort((first, second) => second.relevance - first.relevance)
     .slice(0, 4)
-    .map(({ author }) => ({ id: author.id, name: author.name, username: author.username, initials: author.initials, avatarColor: author.avatarColor, bio: author.bio, articleCount: author.articleCount, roleLabel: author.role === "admin" ? "سردبیر و نویسنده ارشد" : author.role === "editor" ? "ویراستار و نویسنده" : "نویسنده تخصصی" }));
+    .map(({ author }) => author);
 
-  const categories = mockCategories
-    .filter((category) => !category.parentId)
-    .map((category) => ({
-      category,
-      relevance: scoreField(category.name, phrase, tokens, 8) + scoreField(category.slug, phrase, tokens, 6) + scoreField(category.description, phrase, tokens, 3),
-    }))
-    .filter((result) => result.relevance > 0)
+  const categories = publicCategories.map((category) => ({
+    category,
+    relevance: scoreField(category.name, phrase, tokens, 8)
+      + scoreField(category.slug, phrase, tokens, 6)
+      + scoreField(category.description, phrase, tokens, 3),
+  })).filter((result) => result.relevance > 0)
     .sort((first, second) => second.relevance - first.relevance)
     .slice(0, 4)
-    .map(({ category }) => ({ id: category.id, name: category.name, slug: category.slug, description: category.description, articleCount: category.articleCount, color: category.color }));
+    .map(({ category }) => category);
 
   return { query, articles, authors, categories };
 }

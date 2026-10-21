@@ -10,20 +10,21 @@ import { NewsletterSection } from "@/components/public/newsletter-section";
 import { PublicFooter } from "@/components/public/public-footer";
 import { PublicHeader } from "@/components/public/public-header";
 import { getCategoryBySlug, getPublicCategoryData, getPublicCategorySlugs } from "@/lib/public-category-service";
+import { getSiteUrl } from "@/lib/env";
 
 type Props = { params: Promise<{ id: string }> };
 
-export const dynamicParams = false;
-export function generateStaticParams() {
-  return getPublicCategorySlugs().map((id) => ({ id }));
+export const dynamicParams = true;
+export async function generateStaticParams() {
+  return (await getPublicCategorySlugs()).map((id) => ({ id }));
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
   const category = await getCategoryBySlug(id);
   if (!category) return { title: "دسته‌بندی پیدا نشد", robots: { index: false, follow: false } };
-  const url = `https://technama.ir/categories/${category.slug}`;
-  const image = `https://technama.ir${category.coverImage || "/media/design-system.svg"}`;
+  const url = getSiteUrl(`/categories/${category.slug}`);
+  const image = getSiteUrl(category.coverImage || "/media/design-system.svg");
 
   return {
     title: `${category.seo.title}`,
@@ -38,7 +39,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 async function CategoryContent({ slug }: { slug: string }) {
   const data = await getPublicCategoryData(slug);
   if (!data) notFound();
-  const url = `https://technama.ir/categories/${data.category.slug}`;
+  const url = getSiteUrl(`/categories/${data.category.slug}`);
   const structuredData = {
       "@context": "https://schema.org",
       "@type": "CollectionPage",
@@ -46,8 +47,8 @@ async function CategoryContent({ slug }: { slug: string }) {
       description: data.category.seo.description,
       url,
       inLanguage: "fa-IR",
-      isPartOf: { "@type": "WebSite", name: "تک‌نما", url: "https://technama.ir" },
-      mainEntity: { "@type": "ItemList", numberOfItems: data.articles.length, itemListElement: data.articles.map((article, index) => ({ "@type": "ListItem", position: index + 1, url: `https://technama.ir/articles/${article.slug}`, name: article.title })) },
+      isPartOf: { "@type": "WebSite", name: "تک‌نما", url: getSiteUrl("/") },
+      mainEntity: { "@type": "ItemList", numberOfItems: data.articles.length, itemListElement: data.articles.map((article, index) => ({ "@type": "ListItem", position: index + 1, url: getSiteUrl(`/articles/${article.slug}`), name: article.title })) },
   };
 
   return <><main id="main-content" tabIndex={-1}><CategoryHeader category={data.category} publishedCount={data.articles.length}/><FeaturedCategoryArticles articles={data.featured}/><div className="mx-auto grid max-w-360 gap-6 px-4 py-10 md:px-7 md:py-14 xl:grid-cols-[minmax(0,1fr)_300px]"><CategoryArticlesExplorer articles={data.articles}/><CategorySidebar popular={data.popular} related={data.related}/></div><NewsletterSection/></main><script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData).replace(/</g, "\\u003c") }}/></>;

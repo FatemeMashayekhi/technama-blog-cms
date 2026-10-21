@@ -10,6 +10,7 @@ import { NewsletterSection } from "@/components/public/newsletter-section";
 import { PublicFooter } from "@/components/public/public-footer";
 import { PublicHeader } from "@/components/public/public-header";
 import { getAuthorByUsername, getPublicAuthorData, getPublicAuthorUsernames } from "@/lib/public-author-service";
+import { getSiteUrl } from "@/lib/env";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -23,8 +24,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
   const author = await getAuthorByUsername(id);
   if (!author) return { title: "نویسنده پیدا نشد", robots: { index: false, follow: false } };
-  const url = `https://technama.ir/authors/${author.username}`;
-  const image = author.avatar ? `https://technama.ir${author.avatar}` : "https://technama.ir/media/design-system.svg";
+  const url = getSiteUrl(`/authors/${author.username}`);
+  const image = getSiteUrl(author.avatar || "/media/design-system.svg");
   const title = `${author.name}؛ نویسنده مجله فناوری`;
 
   return {
@@ -42,7 +43,7 @@ async function AuthorContent({ username }: { username: string }) {
   const data = await getPublicAuthorData(username);
   if (!data) notFound();
   const publishedCount = data.articles.length + (data.featured ? 1 : 0);
-  const url = `https://technama.ir/authors/${data.author.username}`;
+  const url = getSiteUrl(`/authors/${data.author.username}`);
   const sameAs = Object.values(data.author.socialLinks).filter(Boolean).map((link) => link.startsWith("http") ? link : `https://github.com/${link}`);
   const structuredData = {
     "@context": "https://schema.org",
@@ -58,7 +59,7 @@ async function AuthorContent({ username }: { username: string }) {
       description: data.author.bio,
       jobTitle: data.author.roleLabel,
       url,
-      ...(data.author.avatar ? { image: `https://technama.ir${data.author.avatar}` } : {}),
+      ...(data.author.avatar ? { image: getSiteUrl(data.author.avatar) } : {}),
       ...(sameAs.length ? { sameAs } : {}),
     },
   };

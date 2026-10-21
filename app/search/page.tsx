@@ -6,15 +6,16 @@ import { SearchResults } from "@/components/public/search/search-results";
 import { NewsletterSection } from "@/components/public/newsletter-section";
 import { PublicFooter } from "@/components/public/public-footer";
 import { PublicHeader } from "@/components/public/public-header";
-import { publicCategories } from "@/lib/public-data";
+import { getPublicCategories } from "@/lib/public-category-service";
 import { searchPublicContent, sortSearchArticles, type PublicSearchSort } from "@/lib/public-search-service";
+import { getSiteUrl } from "@/lib/env";
 
 export const metadata: Metadata = {
   title: "جست‌وجو",
   description: "در میان مقاله‌ها، نویسندگان و موضوعات مجله فناوری تک‌نما جست‌وجو کنید.",
-  alternates: { canonical: "https://technama.ir/search" },
+  alternates: { canonical: getSiteUrl("/search") },
   robots: { index: false, follow: true },
-  openGraph: { type: "website", locale: "fa_IR", url: "https://technama.ir/search", siteName: "تک‌نما", title: "جست‌وجو در مجله تک‌نما", description: "مقاله، موضوع یا نویسنده موردنظرتان را در تک‌نما پیدا کنید." },
+  openGraph: { type: "website", locale: "fa_IR", url: getSiteUrl("/search"), siteName: "تک‌نما", title: "جست‌وجو در مجله تک‌نما", description: "مقاله، موضوع یا نویسنده موردنظرتان را در تک‌نما پیدا کنید." },
 };
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
@@ -30,7 +31,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
 }
 
 async function SearchContent({ rawQuery, sort, requestedPage }: { rawQuery: string; sort: PublicSearchSort; requestedPage: number }) {
-  const result = await searchPublicContent(rawQuery);
+  const [result, publicCategories] = await Promise.all([searchPublicContent(rawQuery), getPublicCategories()]);
   const sortedArticles = sortSearchArticles(result.articles, sort);
   const pageCount = Math.max(1, Math.ceil(sortedArticles.length / 6));
   const page = Number.isFinite(requestedPage) ? Math.min(Math.max(requestedPage, 1), pageCount) : 1;

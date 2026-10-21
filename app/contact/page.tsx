@@ -2,8 +2,9 @@ import type { Metadata } from "next";
 import { ArrowLeft, CheckCircle2, Clock3, Mail, MessageSquareText, Newspaper, PenLine, ShieldCheck, Sparkles, UsersRound } from "lucide-react";
 import { PublicFooter } from "@/components/public/public-footer";
 import { PublicHeader } from "@/components/public/public-header";
+import { getSiteUrl } from "@/lib/env";
 
-export const metadata: Metadata = { title: "تماس با تک‌نما", description: "پیشنهاد موضوع، اصلاح مقاله و راه‌های همکاری با تحریریه مجله فناوری تک‌نما.", alternates: { canonical: "https://technama.ir/contact" } };
+export const metadata: Metadata = { title: "تماس با تک‌نما", description: "پیشنهاد موضوع، اصلاح مقاله و راه‌های همکاری با تحریریه مجله فناوری تک‌نما.", alternates: { canonical: getSiteUrl("/contact") } };
 
 const contactPaths = [
   { icon: Newspaper, title: "پیشنهاد موضوع", text: "سوژه، محصول یا روندی را معرفی کنید که به بررسی دقیق‌تر نیاز دارد.", label: "ارسال پیشنهاد", subject: "پیشنهاد موضوع برای تک‌نما" },

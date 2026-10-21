@@ -9,15 +9,15 @@ import { PublicHeader } from "@/components/public/public-header";
 import { getPublicTag, getPublicTags, getPublicTagSlugs } from "@/lib/public-tag-service";
 
 type Props = { params: Promise<{ id: string }> };
-export const dynamicParams = false;
+export const dynamicParams = true;
 
-export function generateStaticParams() {
-  return getPublicTagSlugs().map((id) => ({ id }));
+export async function generateStaticParams() {
+  return (await getPublicTagSlugs()).map((id) => ({ id }));
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
-  const tag = getPublicTag(id);
+  const tag = await getPublicTag(id);
   if (!tag) return { title: "برچسب پیدا نشد", robots: { index: false, follow: false } };
   return {
     title: `#${tag.name}؛ مقاله‌ها و تحلیل‌ها`,
@@ -28,11 +28,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function TagPage({ params }: Props) {
   const { id } = await params;
-  const tag = getPublicTag(id);
+  const tag = await getPublicTag(id);
   if (!tag) notFound();
 
   const [lead, ...rest] = tag.articles;
-  const relatedTags = getPublicTags().filter((item) => item.id !== tag.id).slice(0, 6);
+  const relatedTags = (await getPublicTags()).filter((item) => item.id !== tag.id).slice(0, 6);
   const totalReadingTime = tag.articles.reduce((total, article) => total + article.readingTime, 0);
 
   return (

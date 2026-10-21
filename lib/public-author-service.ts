@@ -58,18 +58,16 @@ export const getPublicAuthors = cache(async (): Promise<PublicAuthorDetail[]> =>
   if (!isSupabaseConfigured) return localAuthors();
   try {
     const { data, error } = await createSupabasePublicClient().from("profiles").select("id,display_name,username,avatar_url,bio,role,is_active,created_at,articles(id,title,status,views,published_at)").eq("is_active", true).order("created_at").limit(100);
-    if (error || !data?.length) return localAuthors();
+    if (error || !data?.length) return [];
     return (data as unknown as DbProfile[]).map(toDatabaseAuthor).sort((first, second) => second.articleCount - first.articleCount || second.totalViews - first.totalViews);
   } catch {
-    return localAuthors();
+    return [];
   }
 });
 
 export async function getAuthorByUsername(username: string): Promise<PublicAuthorDetail | null> {
   const authors = await getPublicAuthors();
-  return authors.find((author) => author.username.toLowerCase() === username.toLowerCase())
-    ?? localAuthors().find((author) => author.username.toLowerCase() === username.toLowerCase())
-    ?? null;
+  return authors.find((author) => author.username.toLowerCase() === username.toLowerCase()) ?? null;
 }
 
 export async function getPublishedArticlesByAuthor(authorId: string): Promise<PublicArticle[]> {
