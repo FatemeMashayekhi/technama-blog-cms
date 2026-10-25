@@ -1,7 +1,7 @@
 import { revalidatePath } from "next/cache";
 import { apiError, apiSuccess, handleApiError } from "@/lib/api-response";
 import { enforceApiRateLimit, readJsonMutation } from "@/lib/api-security";
-import { requireRole } from "@/lib/auth";
+import { requireWriteRole } from "@/lib/auth";
 import { updateArticle } from "@/lib/cms-write";
 import { isSupabaseConfigured } from "@/lib/env";
 import { assertMutationRequest } from "@/lib/request-security";
@@ -12,7 +12,7 @@ type Context = { params: Promise<{ id: string }> };
 export async function PATCH(request: Request, { params }: Context) {
   if (!isSupabaseConfigured) return apiError("اتصال Supabase تنظیم نشده است.", 503);
   try {
-    const access = await requireRole(["admin", "editor", "author"]);
+    const access = await requireWriteRole(["admin", "editor", "author"]);
     if (!access.ok) return apiError(access.error, access.status);
     await enforceApiRateLimit(request, "article-write", 60, 600, access.profile.id);
     const id = uuidSchema.parse((await params).id);
@@ -29,7 +29,7 @@ export async function DELETE(request: Request, { params }: Context) {
   if (!isSupabaseConfigured) return apiError("اتصال Supabase تنظیم نشده است.", 503);
   try {
     assertMutationRequest(request);
-    const access = await requireRole(["admin", "editor", "author"]);
+    const access = await requireWriteRole(["admin", "editor", "author"]);
     if (!access.ok) return apiError(access.error, access.status);
     await enforceApiRateLimit(request, "article-delete", 20, 600, access.profile.id);
     const id = uuidSchema.parse((await params).id);

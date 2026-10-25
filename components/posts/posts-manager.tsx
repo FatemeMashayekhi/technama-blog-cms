@@ -14,6 +14,7 @@ import { PostsEmptyState } from "./empty-state";
 import { postsService } from "@/lib/posts-service";
 import { ArticlesTableSkeleton } from "./articles-table-skeleton";
 import { useToast } from "@/components/ui/toast-provider";
+import { useDashboardSession } from "@/components/layout/dashboard-session-provider";
 
 const PAGE_SIZE = 8;
 
@@ -24,6 +25,7 @@ const statusOrder: Record<ArticleStatus, ArticleStatus> = {
 };
 
 export function PostsManager() {
+  const user = useDashboardSession();
   const [articles, setArticles] = useState<PostArticle[]>([]);
   const [loadState, setLoadState] = useState<"loading" | "ready" | "error">("loading");
   const [loadError, setLoadError] = useState("");
@@ -112,12 +114,13 @@ export function PostsManager() {
           onReset={resetFilters}
         />
 
-        <BulkActions count={selectedIds.size} onPublish={() => updateSelectedStatus("published")} onDraft={() => updateSelectedStatus("draft")} onDelete={() => setPendingDeleteIds([...selectedIds])} onClear={() => setSelectedIds(new Set())} />
+        {!user.readOnly && <BulkActions count={selectedIds.size} onPublish={() => updateSelectedStatus("published")} onDraft={() => updateSelectedStatus("draft")} onDelete={() => setPendingDeleteIds([...selectedIds])} onClear={() => setSelectedIds(new Set())} />}
 
         <section className="rounded-(--radius) border border-(--border) bg-white">
           {filteredArticles.length ? <>
             <ArticlesTable
               articles={visibleArticles}
+              readOnly={user.readOnly}
               selectedIds={selectedIds}
               allVisibleSelected={allVisibleSelected}
               onSelect={(id) => setSelectedIds((current) => { const next = new Set(current); if (next.has(id)) next.delete(id); else next.add(id); return next; })}
@@ -127,11 +130,11 @@ export function PostsManager() {
               onCopy={async (article) => { try { await navigator.clipboard.writeText(`${window.location.origin}/articles/${article.slug}`); toast({ tone: "success", message: "لینک عمومی مقاله کپی شد." }); } catch { toast({ tone: "error", message: "امکان کپی لینک وجود نداشت." }); } }}
             />
             <Pagination page={safePage} pageCount={pageCount} start={pageStart + 1} end={Math.min(pageStart + PAGE_SIZE, filteredArticles.length)} total={filteredArticles.length} onPageChange={setPage} />
-          </> : <PostsEmptyState hasArticles={articles.length > 0} onReset={resetFilters} />}
+          </> : <PostsEmptyState hasArticles={articles.length > 0} onReset={resetFilters} readOnly={user.readOnly} />}
         </section>
       </div>
 
-      <DeleteConfirmationDialog open={pendingDeleteIds.length > 0} count={pendingDeleteIds.length} articleTitle={pendingArticle?.title} onCancel={() => setPendingDeleteIds([])} onConfirm={confirmDelete} />
+      {!user.readOnly && <DeleteConfirmationDialog open={pendingDeleteIds.length > 0} count={pendingDeleteIds.length} articleTitle={pendingArticle?.title} onCancel={() => setPendingDeleteIds([])} onConfirm={confirmDelete} />}
     </>
   );
 }

@@ -4,6 +4,7 @@ import { isSupabaseConfigured } from "@/lib/env";
 import { mapDatabaseArticle, type DbArticle } from "@/lib/public-article-service";
 import { publicArticles, type PublicArticle } from "@/lib/public-data";
 import { createSupabasePublicClient } from "@/lib/supabase/public";
+import { DEMO_PROFILE_USERNAME } from "@/lib/demo-account";
 
 export type PublicAuthorDetail = Author & { roleLabel: string };
 export type PublicAuthorData = {
@@ -57,7 +58,7 @@ const localAuthors = () => mockAuthors.filter((author) => author.status === "act
 export const getPublicAuthors = cache(async (): Promise<PublicAuthorDetail[]> => {
   if (!isSupabaseConfigured) return localAuthors();
   try {
-    const { data, error } = await createSupabasePublicClient().from("profiles").select("id,display_name,username,avatar_url,bio,role,is_active,created_at,articles(id,title,status,views,published_at)").eq("is_active", true).order("created_at").limit(100);
+    const { data, error } = await createSupabasePublicClient().from("profiles").select("id,display_name,username,avatar_url,bio,role,is_active,created_at,articles(id,title,status,views,published_at)").eq("is_active", true).neq("username", DEMO_PROFILE_USERNAME).order("created_at").limit(100);
     if (error || !data?.length) return [];
     return (data as unknown as DbProfile[]).map(toDatabaseAuthor).sort((first, second) => second.articleCount - first.articleCount || second.totalViews - first.totalViews);
   } catch {

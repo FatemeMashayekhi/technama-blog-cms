@@ -7,11 +7,13 @@ import { AtSign, BriefcaseBusiness, Check, Code2, Globe2, LoaderCircle, Save } f
 import { roleLabels, saveMockAuthor, validateAuthor, type AuthorFormData, type AuthorFormErrors, type AuthorRole, type AuthorStatus } from "@/lib/authors-data";
 import { AvatarUploader } from "@/components/profile/avatar-uploader";
 import { useToast } from "@/components/ui/toast-provider";
+import { useDashboardSession } from "@/components/layout/dashboard-session-provider";
 
 const inputClass = "mt-1.5 h-11 w-full rounded-(--radius-sm) border border-(--border) bg-(--surface-subtle) px-3 text-[14px] text-(--text-secondary) outline-none transition-colors focus:border-(--focus-border) focus:bg-white";
 
 export function AuthorForm({ mode, initialData, editingId }: { mode: "create" | "edit"; initialData: AuthorFormData; editingId?: string }) {
   const router = useRouter();
+  const currentUser = useDashboardSession();
   const [data, setData] = useState(initialData);
   const [errors, setErrors] = useState<AuthorFormErrors>({});
   const [saving, setSaving] = useState(false);
@@ -19,6 +21,8 @@ export function AuthorForm({ mode, initialData, editingId }: { mode: "create" | 
   const { toast } = useToast();
   const setField = <K extends keyof AuthorFormData>(key: K, value: AuthorFormData[K]) => { setData((current) => ({ ...current, [key]: value })); setErrors((current) => ({ ...current, [key]: undefined })); };
   const initials = data.name.trim().split(/\s+/).slice(0, 2).map((part) => part[0]).join("") || "ن";
+  const editingPrimaryAdmin = mode === "edit" && editingId === currentUser.id && initialData.role === "admin";
+  const roleOptions = Object.entries(roleLabels).filter(([value]) => editingPrimaryAdmin ? value === "admin" : value !== "admin");
 
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -44,7 +48,7 @@ export function AuthorForm({ mode, initialData, editingId }: { mode: "create" | 
         <section className="rounded-(--radius) border border-(--border) bg-white p-5 sm:p-6"><h3 className="text-xs font-bold text-(--text-strong)">لینک‌های اجتماعی <span className="mr-1 text-[12px] font-normal text-(--text-muted)">اختیاری</span></h3><div className="mt-5 grid gap-4 sm:grid-cols-2">{socialFields.map((field) => <label key={field.key} className="text-[13px] font-bold text-(--text-secondary)"><span className="flex items-center gap-1.5"><field.icon size={13} />{field.label}</span><input dir="ltr" value={data.socialLinks[field.key]} onChange={(event) => setField("socialLinks", { ...data.socialLinks, [field.key]: event.target.value })} className={`${inputClass} text-left`} placeholder={field.placeholder} /></label>)}</div></section>
       </main>
       <aside className="space-y-4"><AvatarUploader value={data.avatar ?? ""} name={data.name || initials} disabled={saving} onBusyChange={setAvatarBusy} onChange={(url) => setField("avatar", url)}/>
-        <section className="rounded-(--radius) border border-(--border) bg-white p-5"><h3 className="text-xs font-bold text-(--text-strong)">دسترسی و وضعیت</h3><div className="mt-5 space-y-4"><label className="block text-[13px] font-bold text-(--text-secondary)">نقش<select value={data.role} onChange={(event) => setField("role", event.target.value as AuthorRole)} className={inputClass}>{Object.entries(roleLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label><fieldset><legend className="mb-2 text-[13px] font-bold text-(--text-secondary)">وضعیت</legend><div className="grid grid-cols-2 gap-2">{(["active", "inactive"] as AuthorStatus[]).map((item) => <label key={item} className={`flex cursor-pointer items-center justify-center gap-2 rounded-(--radius-sm) border px-2 py-3 text-[13px] font-bold ${data.status === item ? "border-(--border-strong) bg-(--accent-soft) text-(--brand-teal)" : "border-(--border) text-(--text-secondary)"}`}><input type="radio" className="sr-only" checked={data.status === item} onChange={() => setField("status", item)} />{data.status === item && <Check size={12} />}{item === "active" ? "فعال" : "غیرفعال"}</label>)}</div></fieldset></div></section></aside>
+        <section className="rounded-(--radius) border border-(--border) bg-white p-5"><h3 className="text-xs font-bold text-(--text-strong)">دسترسی و وضعیت</h3><div className="mt-5 space-y-4"><label className="block text-[13px] font-bold text-(--text-secondary)">نقش<select value={data.readOnly ? "author" : data.role} disabled={Boolean(data.readOnly)} onChange={(event) => setField("role", event.target.value as AuthorRole)} className={`${inputClass} disabled:cursor-not-allowed disabled:opacity-60`}>{roleOptions.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label><label className={`block cursor-pointer rounded-(--radius-sm) border p-3 ${data.readOnly ? "border-(--accent-border) bg-(--accent-soft)" : "border-(--border) bg-(--surface-subtle)"}`}><span className="flex items-center gap-2"><input type="checkbox" checked={Boolean(data.readOnly)} onChange={(event) => setData((current) => ({ ...current, readOnly: event.target.checked, role: event.target.checked ? "author" : current.role }))} className="size-4 accent-[#176f66]"/><strong className="text-[13px] text-(--text-strong)">دسترسی فقط مشاهده</strong></span><span className="mt-2 block text-[12px] leading-6 text-(--text-muted)">کاربر می‌تواند وارد پنل شود، اما ایجاد، ویرایش، حذف و تغییر تنظیمات برای او مسدود است.</span></label><fieldset><legend className="mb-2 text-[13px] font-bold text-(--text-secondary)">وضعیت</legend><div className="grid grid-cols-2 gap-2">{(["active", "inactive"] as AuthorStatus[]).map((item) => <label key={item} className={`flex cursor-pointer items-center justify-center gap-2 rounded-(--radius-sm) border px-2 py-3 text-[13px] font-bold ${data.status === item ? "border-(--border-strong) bg-(--accent-soft) text-(--brand-teal)" : "border-(--border) text-(--text-secondary)"}`}><input type="radio" className="sr-only" checked={data.status === item} onChange={() => setField("status", item)} />{data.status === item && <Check size={12} />}{item === "active" ? "فعال" : "غیرفعال"}</label>)}</div></fieldset></div></section></aside>
     </div>
   </form>;
 }

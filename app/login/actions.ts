@@ -7,6 +7,7 @@ import { checkRateLimit } from "@/lib/rate-limit";
 import { safeAdminPath, stableSecuritySubject } from "@/lib/request-security";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { DEMO_PROFILE_USERNAME, isDemoSignInConfigured } from "@/lib/demo-account";
 import { loginInputSchema, signupInputSchema } from "@/lib/validation";
 
 export type AuthActionState = { error: string; success?: string; fieldErrors?: Partial<Record<"email" | "password" | "displayName", string>> };
@@ -33,6 +34,40 @@ export async function signIn(_state: AuthActionState, formData: FormData): Promi
     if (!data.session || !data.user) return { error: "پاسخ سرویس ورود کامل نبود؛ دوباره تلاش کنید." };
   } catch (error) { return { error: authErrorMessage(error instanceof Error ? error : {}) }; }
   redirect(safeAdminPath(formData.get("next")));
+}
+
+export async function signInDemo(_state: AuthActionState, _formData: FormData): Promise<AuthActionState> {
+  if (!isSupabaseConfigured || !isDemoSignInConfigured()) return { error: "نسخه نمایشی در حال حاضر در دسترس نیست." };
+  const id = process.env.DEMO_USER_ID!;
+  const email = process.env.DEMO_USER_EMAIL!;
+  const password = process.env.DEMO_USER_PASSWORD!;
+  try {
+    if (!await allowAuthAttempt("login", email, 30)) return { error: "تعداد ورودهای نمایشی زیاد است؛ کمی بعد دوباره امتحان کنید." };
+    const admin = createSupabaseAdminClient();
+    const { data: current, error: userError } = await admin.auth.admin.getUserById(id);
+    if (userError || !current.user) return { error: "حساب نمایشی پیدا نشد؛ تنظیمات سرور را بررسی کنید." };
+    const { error: updateError } = await admin.auth.admin.updateUserById(id, {
+      email,
+      password,
+      email_confirm: true,
+      app_metadata: { ...current.user.app_metadata, read_only: true, demo_account: true },
+    });
+    if (updateError) throw updateError;
+    const { error: profileError } = await admin.from("profiles").update({
+      username: DEMO_PROFILE_USERNAME,
+      display_name: "بازدیدکننده نسخه نمایشی",
+      role: "author",
+      is_active: true,
+    }).eq("id", id);
+    if (profileError) throw profileError;
+    const supabase = await createSupabaseServerClient();
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) return { error: authErrorMessage(error) };
+    if (!data.session || !data.user) return { error: "پاسخ سرویس ورود کامل نبود؛ دوباره تلاش کنید." };
+  } catch (error) {
+    return { error: authErrorMessage(error instanceof Error ? error : {}) };
+  }
+  redirect("/admin/dashboard");
 }
 
 export async function signUp(_state: AuthActionState, formData: FormData): Promise<AuthActionState> {

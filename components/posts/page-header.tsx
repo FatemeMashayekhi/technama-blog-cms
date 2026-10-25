@@ -1,7 +1,11 @@
+"use client";
+
 import Link from "next/link";
 import { Plus } from "lucide-react";
+import { useDashboardSession } from "@/components/layout/dashboard-session-provider";
 
 export function PostsPageHeader() {
+  const user = useDashboardSession();
   return (
     <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
       <div>
@@ -13,13 +17,13 @@ export function PostsPageHeader() {
           مدیریت، ویرایش و انتشار محتوای مجله
         </p>
       </div>
-      <Link
+      {!user.readOnly && <Link
         href="/admin/posts/new"
         className="inline-flex h-11 items-center justify-center gap-2 rounded-(--radius-sm) bg-(--brand-navy) px-4 text-xs font-bold text-white transition-colors hover:bg-(--brand-navy-hover) focus-visible:outline-(--brand-teal)"
       >
         <Plus size={17} strokeWidth={2.2} />
         ایجاد مقاله جدید
-      </Link>
+      </Link>}
     </div>
   );
 }

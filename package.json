@@ -18,6 +18,7 @@
     "load:k6": "k6 run scripts/load/k6-public.js",
     "seed:authors": "node scripts/seed-authors.mjs",
     "seed:content": "node scripts/seed-editorial-content.mjs",
+    "seed:demo": "node scripts/create-demo-user.mjs",
     "seed:all": "npm run seed:authors && npm run seed:content"
   },
   "dependencies": {

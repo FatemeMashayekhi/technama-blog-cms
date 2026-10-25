@@ -95,9 +95,10 @@ The application uses Supabase when it is available and falls back to the version
 
 1. Create a new Supabase project.
 2. Copy `.env.example` to `.env.local` and fill in the values from the Supabase project settings.
-3. Apply both migrations in timestamp order using the Supabase SQL Editor or Supabase CLI:
+3. Apply all migrations in timestamp order using the Supabase SQL Editor or Supabase CLI:
    - `supabase/migrations/202609120001_initial_cms.sql`
    - `supabase/migrations/202610070001_security_hardening.sql`
+   - `supabase/migrations/202610250001_read_only_demo_access.sql`
 4. Temporarily set `NEXT_PUBLIC_ALLOW_SIGNUP=true`, start the application, and create the trusted bootstrap account at `/login`.
 5. Verify that account's email, copy its UUID from Supabase Authentication, and promote it explicitly in the SQL Editor:
 
@@ -107,6 +108,17 @@ The application uses Supabase when it is available and falls back to the version
 
 6. Immediately restore `NEXT_PUBLIC_ALLOW_SIGNUP=false`. New team members should then be invited by an administrator from the dashboard.
 7. Run `npm run seed:all` once to create the editorial author profiles and upsert the curated public articles, categories, and article-tag relations. The command is idempotent and requires `SUPABASE_SERVICE_ROLE_KEY`.
+
+### Read-only Portfolio Demo
+
+The sign-in page can offer a one-click portfolio demo without publishing a password in browser code or HTML. The account is signed in by a server action and is protected at three levels: write controls are removed from the UI, every mutating API rejects `read_only` sessions, and a PostgreSQL trigger rejects direct table mutations even if a visitor reuses the Supabase access token.
+
+1. Apply `202610250001_read_only_demo_access.sql` before enabling the demo.
+2. Set `DEMO_USER_EMAIL` and a unique `DEMO_USER_PASSWORD` of at least 16 characters in `.env.local`.
+3. Run `npm run seed:demo` and copy the printed UUID into `DEMO_USER_ID`.
+4. Add the same three server-only values to Vercel and redeploy.
+
+The demo user is deliberately forced to the `author` database role and `read_only=true` Auth app metadata. It can browse published content and safe dashboard summaries, but cannot open author, media, comment, settings, or editor routes. Do not make this account an administrator and do not reuse its password anywhere else.
 
 On Windows PowerShell:
 
@@ -123,6 +135,7 @@ npm run dev
 - Authentication sessions are managed through secure cookies compatible with React Server Components.
 - The Next.js Proxy performs the initial protection of `/admin` routes.
 - Every API endpoint independently validates the authenticated user and their role.
+- Read-only access is stored in immutable Auth app metadata, enforced in APIs, and backed by database mutation-blocking triggers.
 - PostgreSQL Row Level Security is the final authorization boundary.
 - Authors can modify only their own articles and media; editors and administrators receive broader permissions.
 - Commenter email addresses are available only to authorized editorial users and are never returned by the public API.
@@ -140,10 +153,11 @@ Supabase is hosted independently from the frontend, so the application can be de
 
 1. Import the GitHub repository into Vercel and keep the framework preset on Next.js.
 2. Add every variable from `.env.example` in **Project Settings → Environment Variables**. Use the real production URL for `NEXT_PUBLIC_SITE_URL`, keep `NEXT_PUBLIC_ALLOW_SIGNUP=false`, and never prefix the server-only key or `RATE_LIMIT_SECRET` with `NEXT_PUBLIC_`.
-3. Apply both SQL migrations and run `npm run seed:all` against the same Supabase project used by the Vercel environment variables.
-4. In **Supabase → Authentication → URL Configuration**, set the Site URL to the production domain. Add `http://localhost:3000/**` for local development and the appropriate Vercel preview wildcard only when preview authentication is required.
-5. Trigger a new deployment after adding or changing environment variables; Vercel does not apply new values to deployments that already exist.
-6. Verify `/api/health`, sign-in, one protected `/admin` route, image uploads, comments, and an article detail page on the deployed domain.
+3. Apply all SQL migrations and run `npm run seed:all` against the same Supabase project used by the Vercel environment variables.
+4. If the portfolio demo is enabled, run `npm run seed:demo`, add the resulting `DEMO_USER_ID` plus the demo email/password as server-only Vercel variables, and redeploy.
+5. In **Supabase → Authentication → URL Configuration**, set the Site URL to the production domain. Add `http://localhost:3000/**` for local development and the appropriate Vercel preview wildcard only when preview authentication is required.
+6. Trigger a new deployment after adding or changing environment variables; Vercel does not apply new values to deployments that already exist.
+7. Verify `/api/health`, both owner and demo sign-in, one protected `/admin` route, image uploads, comments, and an article detail page on the deployed domain.
 
 The publishable Supabase key is intended for browser use and is constrained by Row Level Security. `SUPABASE_SERVICE_ROLE_KEY` and `RATE_LIMIT_SECRET` must remain server-only Vercel secrets because privileged keys bypass Row Level Security.
 

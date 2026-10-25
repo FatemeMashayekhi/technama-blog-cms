@@ -1,6 +1,6 @@
 import { apiError, apiSuccess, handleApiError } from "@/lib/api-response";
 import { enforceApiRateLimit, readJsonMutation } from "@/lib/api-security";
-import { requireRole } from "@/lib/auth";
+import { requireRole, requireWriteRole } from "@/lib/auth";
 import { isSupabaseConfigured } from "@/lib/env";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -69,7 +69,7 @@ export async function GET(request: Request) {
 export async function PATCH(request: Request) {
   if (!isSupabaseConfigured) return apiError("اتصال Supabase تنظیم نشده است.", 503);
   try {
-    const access = await requireRole(["admin", "editor"]);
+    const access = await requireWriteRole(["admin", "editor"]);
     if (!access.ok) return apiError(access.error, access.status);
     await enforceApiRateLimit(request, "comment-bulk-moderation", 30, 600, access.profile.id);
     const input = commentBulkModerationSchema.parse(await readJsonMutation(request, 12 * 1024));
@@ -83,7 +83,7 @@ export async function PATCH(request: Request) {
 export async function DELETE(request: Request) {
   if (!isSupabaseConfigured) return apiError("اتصال Supabase تنظیم نشده است.", 503);
   try {
-    const access = await requireRole(["admin", "editor"]);
+    const access = await requireWriteRole(["admin", "editor"]);
     if (!access.ok) return apiError(access.error, access.status);
     await enforceApiRateLimit(request, "comment-bulk-delete", 20, 600, access.profile.id);
     const input = commentBulkDeleteSchema.parse(await readJsonMutation(request, 12 * 1024));

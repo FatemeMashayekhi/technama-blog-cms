@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import sharp from "sharp";
 import { apiError, apiSuccess, handleApiError } from "@/lib/api-response";
 import { enforceApiRateLimit } from "@/lib/api-security";
-import { requireRole } from "@/lib/auth";
+import { requireRole, requireWriteRole } from "@/lib/auth";
 import { isSupabaseConfigured } from "@/lib/env";
 import { assertMutationRequest } from "@/lib/request-security";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
@@ -38,7 +38,7 @@ export async function POST(request: Request) {
   if (!isSupabaseConfigured) return apiError("اتصال Supabase تنظیم نشده است.", 503);
   try {
     assertMutationRequest(request, { maxBytes: maxSize + 128 * 1024, contentTypes: ["multipart/form-data"], requireBody: true });
-    const access = await requireRole(["admin", "editor", "author"]);
+    const access = await requireWriteRole(["admin", "editor", "author"]);
     if (!access.ok) return apiError(access.error, access.status);
     await enforceApiRateLimit(request, "media-upload", 20, 3600, access.profile.id);
     const form = await request.formData();

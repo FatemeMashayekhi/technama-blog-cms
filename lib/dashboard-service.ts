@@ -31,7 +31,7 @@ export const getDashboardCurrentUser = cache(async (): Promise<DashboardUser> =>
   if (!isSupabaseConfigured) return defaultDashboardUser;
   const [profile, authUser] = await Promise.all([getCurrentProfile(), getCurrentUser()]);
   if (!profile) return defaultDashboardUser;
-  return { id: profile.id, name: profile.display_name, email: authUser?.email ?? "", avatar: profile.avatar_url ?? undefined, role: profile.role };
+  return { id: profile.id, name: profile.display_name, email: authUser?.email ?? "", avatar: profile.avatar_url ?? undefined, role: profile.role, readOnly: profile.read_only, demoAccount: profile.demo_account };
 });
 
 export const getDashboardOverview = cache(async (): Promise<DashboardOverview> => {

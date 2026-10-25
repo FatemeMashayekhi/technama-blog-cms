@@ -1,6 +1,6 @@
 import { apiError, apiSuccess, handleApiError } from "@/lib/api-response";
 import { enforceApiRateLimit, readJsonMutation } from "@/lib/api-security";
-import { requireRole } from "@/lib/auth";
+import { requireWriteRole } from "@/lib/auth";
 import { isSupabaseConfigured } from "@/lib/env";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { assertValidCategoryParent } from "@/lib/taxonomy-server";
@@ -20,7 +20,7 @@ export async function GET() {
 export async function POST(request: Request) {
   if (!isSupabaseConfigured) return apiError("اتصال Supabase تنظیم نشده است.", 503);
   try {
-    const access = await requireRole(["admin", "editor"]);
+    const access = await requireWriteRole(["admin", "editor"]);
     if (!access.ok) return apiError(access.error, access.status);
     await enforceApiRateLimit(request, "taxonomy-write", 60, 600, access.profile.id);
     const input = categoryInputSchema.parse(await readJsonMutation(request, 16 * 1024));

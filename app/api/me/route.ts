@@ -1,6 +1,6 @@
 import { apiError, apiSuccess, handleApiError } from "@/lib/api-response";
 import { enforceApiRateLimit, readJsonMutation } from "@/lib/api-security";
-import { getCurrentProfile, requireRole } from "@/lib/auth";
+import { getCurrentProfile, requireWriteRole } from "@/lib/auth";
 import { isSupabaseConfigured } from "@/lib/env";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { ownProfilePatchSchema } from "@/lib/validation";
@@ -19,7 +19,7 @@ export async function GET() {
 export async function PATCH(request: Request) {
   if (!isSupabaseConfigured) return apiError("اتصال Supabase تنظیم نشده است.", 503);
   try {
-    const access = await requireRole(["admin", "editor", "author"]);
+    const access = await requireWriteRole(["admin", "editor", "author"]);
     if (!access.ok) return apiError(access.error, access.status);
     await enforceApiRateLimit(request, "own-profile-write", 20, 600, access.profile.id);
     const input = ownProfilePatchSchema.parse(await readJsonMutation(request, 16 * 1024));

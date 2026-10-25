@@ -19,6 +19,7 @@ export default async function ProfilePage() {
     if (!profile?.is_active) redirect("/login?error=inactive");
     editable = { displayName: profile.display_name, username: profile.username, email: user.email ?? "", avatarUrl: profile.avatar_url ?? "", bio: profile.bio ?? "", role: profile.role };
   }
-  const sessionUser = { id: isSupabaseConfigured ? (await getCurrentUser())?.id ?? defaultDashboardUser.id : defaultDashboardUser.id, name: editable.displayName, email: editable.email, avatar: editable.avatarUrl || undefined, role: editable.role };
+  const authProfile = isSupabaseConfigured ? await getCurrentProfile() : null;
+  const sessionUser = { id: isSupabaseConfigured ? (await getCurrentUser())?.id ?? defaultDashboardUser.id : defaultDashboardUser.id, name: editable.displayName, email: editable.email, avatar: editable.avatarUrl || undefined, role: editable.role, readOnly: authProfile?.read_only ?? false, demoAccount: authProfile?.demo_account ?? false };
   return <DashboardSessionProvider user={sessionUser}><DashboardLayout headerTitle="پروفایل من" headerSubtitle="مدیریت هویت و اطلاعات حساب"><ProfileForm initialProfile={editable} configured={isSupabaseConfigured}/></DashboardLayout></DashboardSessionProvider>;
 }

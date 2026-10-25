@@ -13,6 +13,7 @@ export type Author = {
   initials: string;
   bio: string;
   role: AuthorRole;
+  readOnly?: boolean;
   status: AuthorStatus;
   articleCount: number;
   totalViews: number;
@@ -23,7 +24,7 @@ export type Author = {
   recentArticles: string[];
 };
 
-export type AuthorFormData = Pick<Author, "name" | "username" | "email" | "avatar" | "bio" | "role" | "status" | "socialLinks">;
+export type AuthorFormData = Pick<Author, "name" | "username" | "email" | "avatar" | "bio" | "role" | "readOnly" | "status" | "socialLinks">;
 export type AuthorFormErrors = Partial<Record<"name" | "username" | "email" | "bio" | "role", string>>;
 
 const socials = (github: string): AuthorSocialLinks => ({ website: "", linkedin: "", twitter: "", github });
@@ -39,11 +40,11 @@ export const mockAuthors: Author[] = [
   { id: "author-8", name: "رها توکلی", username: "raha.tech", email: "raha@technama.ir", initials: "رت", avatarColor: "bg-[#eee4d8] text-[#786044]", bio: "خبرنگار فناوری‌های مصرفی، محصولات دیجیتال و روندهای رسانه‌های اجتماعی.", role: "author", status: "inactive", articleCount: 29, totalViews: 61750, publishedRate: 71, joinedAt: "2024-08-03", joinedLabel: "۱۳ مرداد ۱۴۰۳", socialLinks: socials("rahatavakoli"), recentArticles: ["مرور مهم‌ترین رویدادهای فناوری این هفته"] },
 ];
 
-export const emptyAuthor: AuthorFormData = { name: "", username: "", email: "", bio: "", role: "author", status: "active", socialLinks: { website: "", linkedin: "", twitter: "", github: "" } };
+export const emptyAuthor: AuthorFormData = { name: "", username: "", email: "", bio: "", role: "author", readOnly: false, status: "active", socialLinks: { website: "", linkedin: "", twitter: "", github: "" } };
 
 export function getMockAuthor(id: string) { return mockAuthors.find((author) => author.id === id) ?? null; }
-export function authorToForm(author: Author): AuthorFormData { return { name: author.name, username: author.username, email: author.email, avatar: author.avatar, bio: author.bio, role: author.role, status: author.status, socialLinks: { ...author.socialLinks } }; }
-export async function saveMockAuthor(data: AuthorFormData, invite = false, editingId?: string) { if (isSupabaseConfigured && (invite || editingId)) { const response = await fetch(editingId ? `/api/profiles/${editingId}` : "/api/profiles", { method: editingId ? "PATCH" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(editingId ? { displayName: data.name, username: data.username, email: data.email, avatarUrl: data.avatar ?? null, bio: data.bio, role: data.role, isActive: data.status === "active" } : { email: data.email, displayName: data.name, role: data.role }) }); const result = await response.json() as { ok: boolean; error?: string }; if (!response.ok || !result.ok) throw new Error(result.error || "ذخیره نویسنده انجام نشد."); return data; } await new Promise((resolve) => setTimeout(resolve, 650)); return data; }
+export function authorToForm(author: Author): AuthorFormData { return { name: author.name, username: author.username, email: author.email, avatar: author.avatar, bio: author.bio, role: author.role, readOnly: author.readOnly ?? false, status: author.status, socialLinks: { ...author.socialLinks } }; }
+export async function saveMockAuthor(data: AuthorFormData, invite = false, editingId?: string) { if (isSupabaseConfigured && (invite || editingId)) { const response = await fetch(editingId ? `/api/profiles/${editingId}` : "/api/profiles", { method: editingId ? "PATCH" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(editingId ? { displayName: data.name, username: data.username, email: data.email, avatarUrl: data.avatar ?? null, bio: data.bio, role: data.role, readOnly: data.readOnly ?? false, isActive: data.status === "active" } : { email: data.email, displayName: data.name, role: data.role, readOnly: data.readOnly ?? false }) }); const result = await response.json() as { ok: boolean; error?: string }; if (!response.ok || !result.ok) throw new Error(result.error || "ذخیره نویسنده انجام نشد."); return data; } await new Promise((resolve) => setTimeout(resolve, 650)); return data; }
 
 export function validateAuthor(data: AuthorFormData): AuthorFormErrors {
   const errors: AuthorFormErrors = {};

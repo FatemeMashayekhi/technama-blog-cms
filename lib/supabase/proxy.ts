@@ -41,6 +41,11 @@ export async function updateSupabaseSession(request: NextRequest) {
     loginUrl.searchParams.set("next", path);
     return NextResponse.redirect(loginUrl);
   }
+  if (path === "/profile" && user?.app_metadata?.read_only === true) return NextResponse.redirect(new URL("/admin/dashboard?notice=read-only", request.url));
+  if (path.startsWith("/admin") && user?.app_metadata?.read_only === true) {
+    const allowedReadOnlyPaths = ["/admin/dashboard", "/admin/posts", "/admin/categories", "/admin/tags", "/admin/analytics"];
+    if (!allowedReadOnlyPaths.includes(path)) return NextResponse.redirect(new URL("/admin/dashboard?notice=read-only", request.url));
+  }
   if (path === "/login" && user) return NextResponse.redirect(new URL("/admin/dashboard", request.url));
   return response;
 }

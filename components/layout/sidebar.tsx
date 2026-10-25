@@ -35,7 +35,8 @@ export function Sidebar({ open = false, onClose, pendingCommentCount = 0 }: Side
   const pathname = usePathname();
   const user = useDashboardSession();
   const initials = user.name.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join("");
-  const roleLabel = user.role === "admin" ? "مدیر" : user.role === "editor" ? "ویراستار" : "نویسنده";
+  const roleLabel = user.readOnly ? "بازدیدکننده · فقط مشاهده" : user.role === "admin" ? "مدیر" : user.role === "editor" ? "ویراستار" : "نویسنده";
+  const visibleNavigation = user.readOnly ? navigation.filter((item) => ["/admin/dashboard", "/admin/posts", "/admin/categories", "/admin/analytics"].includes(item.href)) : navigation;
   useEffect(() => {
     if (!open) return;
     const previousOverflow = document.body.style.overflow;
@@ -95,7 +96,7 @@ export function Sidebar({ open = false, onClose, pendingCommentCount = 0 }: Side
             مدیریت محتوا
           </p>
           <div className="space-y-1">
-            {navigation.map((item) => {
+            {visibleNavigation.map((item) => {
               const isActive = item.href === "/admin/posts"
                 ? pathname.startsWith("/admin/posts")
                 : item.href === "/admin/authors"
@@ -126,16 +127,16 @@ export function Sidebar({ open = false, onClose, pendingCommentCount = 0 }: Side
               );
             })}
           </div>
-          <div className="my-5 border-t border-white/10" />
+          {!user.readOnly && <><div className="my-5 border-t border-white/10" />
           <Link href="/admin/settings" onClick={onClose} aria-current={pathname.startsWith("/admin/settings") ? "page" : undefined} className={`flex h-11 w-full items-center gap-3 rounded-(--radius-sm) px-3 text-[13px] ${pathname.startsWith("/admin/settings") ? "bg-white/11 font-bold text-white" : "text-(--text-faint) hover:bg-white/6 hover:text-white"}`}>
             <Settings size={18} strokeWidth={pathname.startsWith("/admin/settings") ? 2.2 : 1.8} />
             <span>تنظیمات</span>
-          </Link>
+          </Link></>}
         </nav>
 
         <div className="border-t border-white/10 p-3">
           <div className="flex items-center gap-2 rounded-(--radius) px-2 py-2 hover:bg-white/5">
-            <Link href="/admin/settings?section=profile" onClick={onClose} className="flex min-w-0 flex-1 items-center gap-3 rounded-lg px-1 py-1" aria-label={`نمایه ${user.name}`}>
+            <Link href={user.readOnly ? "/admin/dashboard" : "/admin/settings?section=profile"} onClick={onClose} className="flex min-w-0 flex-1 items-center gap-3 rounded-lg px-1 py-1" aria-label={`نمایه ${user.name}`}>
             <span className="grid size-10 shrink-0 place-items-center rounded-full bg-(--surface-muted) text-xs font-bold text-(--brand-teal)">
               {initials}
             </span>

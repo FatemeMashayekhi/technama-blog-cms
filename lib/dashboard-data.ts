@@ -10,6 +10,8 @@ export type DashboardUser = {
   email: string;
   avatar?: string;
   role: DashboardRole;
+  readOnly: boolean;
+  demoAccount: boolean;
 };
 
 export type DashboardArticle = {
@@ -64,7 +66,7 @@ export type DashboardAnalyticsPoint = { date: string; label: string; views: numb
 export type DashboardAnalytics = { range: AnalyticsRange; rangeLabel: string; total: number; change: number; comparisonLabel: string; points: DashboardAnalyticsPoint[] };
 
 export const dashboardRangeLabels: Record<AnalyticsRange, string> = { "7d": "۷ روز گذشته", "30d": "۳۰ روز گذشته", "90d": "۹۰ روز گذشته" };
-export const defaultDashboardUser: DashboardUser = { id: "local-preview-user", name: "مریم موسوی", email: "editor@technama.local", role: "admin" };
+export const defaultDashboardUser: DashboardUser = { id: "local-preview-user", name: "مریم موسوی", email: "editor@technama.local", role: "admin", readOnly: false, demoAccount: false };
 
 const numberFormatter = new Intl.NumberFormat("fa-IR");
 const compactFormatter = new Intl.NumberFormat("fa-IR", { notation: "compact", maximumFractionDigits: 1 });
